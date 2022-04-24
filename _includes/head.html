@@ -15,11 +15,11 @@
 
 <!-- For all browsers -->
 <link rel="stylesheet" href="{{ '/assets/css/main.css' | relative_url }}" id="light_theme">
-<script>sessionStorage.setItem('theme', 'light')</script>
 {% if site.minimal_mistakes_skin_dark %}
     <link rel="stylesheet alternate" href="{{ '/assets/css/dark.css' | relative_url }}" id="dark_theme">
     <script>
         let theme = sessionStorage.getItem('theme');
+        let icon = document.getElementById('light_dark_icon');
         if (theme === "dark") {
             sessionStorage.setItem('theme', 'dark');
             lightTheme = document.getElementById('light_theme');

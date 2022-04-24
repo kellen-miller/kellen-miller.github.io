@@ -14,13 +14,12 @@
                 <ul class="visible-links">
                     {%- for link in site.data.navigation.main -%}
                     <li class="masthead__menu-item">
-                        <a href="{{ link.url | relative_url }}" {% if link.description %} title="{{ link.description }}"
-                           {% endif %}>{{ link.title }}</a>
+                        <a href="{{ link.url | relative_url }}"{% if link.description %} title="{{ link.description }}"{% endif %}>{{ link.title }}</a>
                     </li>
                     {%- endfor -%}
                 </ul>
                 {% if site.minimal_mistakes_dark %}
-                <i aria-hidden="true" class="fas fa-fw fa-duotone fa-moon-over-sun"
+                <i class="fas fa-fw fa-duotone fa-moon-over-sun" aria-hidden="true"
                    onclick="
                    node1=document.getElementById('light_theme');
                    node2=document.getElementById('dark_theme');

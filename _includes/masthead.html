@@ -23,7 +23,9 @@
                     {%- endfor -%}
                 </ul>
                 {% if site.minimal_mistakes_skin_dark %}
-                    <i class="fas fa-fw fa-adjust" aria-hidden="true" onclick="toggleTheme()"></i>
+                <button onclick="toggleTheme()" type="button">
+                    <img class="fas fa-fw" aria-hidden="true" src="/assets/images/light-dark.png" alt="">
+                </button>
                 {% endif %}
                 {% if site.search == true %}
                     <button class="search__toggle" type="button">

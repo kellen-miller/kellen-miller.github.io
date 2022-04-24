@@ -18,6 +18,20 @@
 <script>sessionStorage.setItem('theme', 'light')</script>
 {% if site.minimal_mistakes_skin_dark %}
     <link rel="stylesheet alternate" href="{{ '/assets/css/dark.css' | relative_url }}" id="dark_theme">
+    <script>
+        let theme = sessionStorage.getItem('theme');
+        if (theme === "dark") {
+            sessionStorage.setItem('theme', 'dark');
+            lightTheme = document.getElementById('light_theme');
+            darkTheme = document.getElementById('dark_theme');
+            lightTheme.setAttribute('light_theme', 'stylesheet alternate');
+            darkTheme.setAttribute('dark_theme', 'stylesheet');
+            icon.setAttribute('src', '/assets/images/light.png')
+        } else {
+            sessionStorage.setItem('theme', 'light');
+            icon.setAttribute('src', '/assets/images/dark.png')
+        }
+    </script>
 {% endif %}
 <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css" as="style"
       onload="this.onload=null;this.rel='stylesheet'">

@@ -16,8 +16,6 @@ breadcrumbs: true
 markdown: kramdown
 remote_theme: mmistakes/minimal-mistakes
 
-head_scripts:
-  - /assets/js/theme-switch.js
 # Outputting
 permalink: /:categories/:title/
 paginate: 5 # amount of posts to show

@@ -23,8 +23,8 @@
                     {%- endfor -%}
                 </ul>
                 {% if site.minimal_mistakes_skin_dark %}
-                    <button onclick="toggleTheme()" type="button">
-                        <img class="fas fa-fw" aria-hidden="true" src="/assets/images/light-dark.png" alt="">
+                    <button onclick="toggleTheme()" type="button" style="background-color: transparent; border-color: transparent">
+                        <img class="fas fa-fw" aria-hidden="true" src="/assets/images/light.png" alt="" id="light_dark_icon">
                     </button>
                 {% endif %}
                 {% if site.search == true %}

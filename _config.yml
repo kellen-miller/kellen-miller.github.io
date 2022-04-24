@@ -1,6 +1,6 @@
-title: MM
-minimal_mistakes_skin: "air"
-minimal_mistakes_skin_dark: "dark"
+title: kellen-miller.github.io
+minimal_mistakes_skin: air
+minimal_mistakes_skin_dark: dark
 email: kellen.miller12@gmail.com
 description: >- # this means to ignore newlines until "baseurl:"
   Write an awesome description for your new site here. You can edit this
@@ -8,7 +8,7 @@ description: >- # this means to ignore newlines until "baseurl:"
   Google search results) and in your feed.xml site description.
 twitter_username: username
 github_username: kellen-miller
-repository: "https://github.com/kellen-miller/kellen-miller.github.io"
+repository: https://github.com/kellen-miller/kellen-miller.github.io
 
 search: true
 breadcrumbs: true
@@ -18,7 +18,7 @@ markdown: kramdown
 remote_theme: mmistakes/minimal-mistakes
 
 head_scripts:
-  - /assets/js/toggle-theme.js
+  - /assets/js/theme-switch.js
 # Outputting
 permalink: /:categories/:title/
 paginate: 5 # amount of posts to show

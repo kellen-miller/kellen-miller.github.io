@@ -15,8 +15,8 @@
 
 <!-- For all browsers -->
 <link rel="stylesheet" href="{{ '/assets/css/main.css' | relative_url }}" id="theme_source">
-{% if site.minimal_mistakes_skin_dark %}
-<link rel="stylesheet alternate" href="{{ '/assets/css/dark.css' | relative_url }}" id="theme_source_2">
+{% if site.minimal_mistakes_skin2 %}
+<link rel="stylesheet alternate" href="{{ '/assets/css/theme2.css' | relative_url }}" id="theme_source_2">
 <script>
     let theme = sessionStorage.getItem('theme');
     if (theme === "dark") {
@@ -38,7 +38,7 @@
 </noscript>
 
 {% if site.head_scripts %}
-    {% for script in site.head_scripts %}
-        <script src="{{ script | relative_url }}"></script>
-    {% endfor %}
+{% for script in site.head_scripts %}
+<script src="{{ script | relative_url }}"></script>
+{% endfor %}
 {% endif %}

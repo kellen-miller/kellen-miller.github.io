@@ -1,7 +1,3 @@
-function setInitialTheme() {
-    sessionStorage.setItem('theme', 'light');
-}
-
 function toggleTheme() {
     console.log("i got clicked!!!")
     let theme = sessionStorage.getItem('theme');
@@ -19,4 +15,5 @@ function toggleTheme() {
         icon.setAttribute("src", "/assets/images/dark.png")
         sessionStorage.setItem('theme', 'light');
     }
+    return false;
 }

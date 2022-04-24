@@ -23,25 +23,8 @@
                     {%- endfor -%}
                 </ul>
                 {% if site.minimal_mistakes_skin_dark %}
-                    <button type="button" style="background-color: transparent; border-color: transparent"
-                            onclick="
-                            let theme = sessionStorage.getItem('theme');
-                            let lightTheme = document.getElementById('light_theme');
-                            let darkTheme = document.getElementById('dark_theme');
-                            let icon = document.getElementById('light_dark_icon');
-                            if (theme === 'dark') {
-                                lightTheme.setAttribute('rel', 'stylesheet alternate');
-                                darkTheme.setAttribute('rel', 'stylesheet');
-                                icon.setAttribute('src', '/assets/images/light.png')
-                                sessionStorage.setItem('theme', 'dark');
-                            } else {
-                                darkTheme.setAttribute('rel', 'stylesheet alternate');
-                                lightTheme.setAttribute('rel', 'stylesheet');
-                                icon.setAttribute('src', '/assets/images/dark.png')
-                                sessionStorage.setItem('theme', 'light');
-                            }
-                            return false;">
-                        <img class="fas fa-fw" aria-hidden="true" src="/assets/images/dark.png" alt="" id="light_dark_icon">
+                    <button style="background-color: transparent; border-color: transparent">
+                        <img class="fas fa-fw" src="/assets/images/dark.png" alt="" id="light_dark_icon" aria-hidden="true" onclick="node1=document.getElementById('theme_source');node2=document.getElementById('theme_source_2');icon=document.getElementById('light_dark_icon');if(node1.getAttribute('rel')=='stylesheet'){node1.setAttribute('rel', 'stylesheet alternate'); node2.setAttribute('rel', 'stylesheet');sessionStorage.setItem('theme', 'dark');icon.setAttribute('src', '/assets/images/light.png')}else{node2.setAttribute('rel', 'stylesheet alternate'); node1.setAttribute('rel', 'stylesheet');sessionStorage.setItem('theme', 'light');icon.setAttribute('src', '/assets/images/dark.png');} return false;">
                     </button>
                 {% endif %}
                 {% if site.search == true %}

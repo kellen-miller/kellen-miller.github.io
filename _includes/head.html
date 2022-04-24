@@ -3,7 +3,7 @@
 {% include seo.html %}
 
 {% unless site.atom_feed.hide %}
-<link href="{% if site.atom_feed.path %}{{ site.atom_feed.path }}{% else %}{{ '/feed.xml' | relative_url }}{% endif %}" type="application/atom+xml" rel="alternate" title="{{ site.title }} Feed">
+    <link href="{% if site.atom_feed.path %}{{ site.atom_feed.path }}{% else %}{{ '/feed.xml' | relative_url }}{% endif %}" type="application/atom+xml" rel="alternate" title="{{ site.title }} Feed">
 {% endunless %}
 
 <!-- https://t.co/dKP3o1e -->
@@ -16,26 +16,30 @@
 <!-- For all browsers -->
 <link rel="stylesheet" href="{{ '/assets/css/main.css' | relative_url }}" id="light_theme">
 {% if site.minimal_mistakes_dark %}
-<link rel="stylesheet alternate" href="{{ '/assets/css/dark.css' | relative_url }}" id="dark_theme">
-<script>
-    let theme = sessionStorage.getItem('theme');
-    if (theme === "dark") {
-        sessionStorage.setItem('theme', 'dark');
-        node1 = document.getElementById('light_theme');
-        node2 = document.getElementById('dark_theme');
-        node1.setAttribute('rel', 'stylesheet alternate');
-        node2.setAttribute('rel', 'stylesheet');
-    }
-    else {
-        sessionStorage.setItem('theme', 'light');
-    }
-</script>
+    <link rel="stylesheet alternate" href="{{ '/assets/css/dark.css' | relative_url }}" id="dark_theme">
+    <script>
+        let theme = sessionStorage.getItem('theme');
+        if (theme === "dark") {
+            sessionStorage.setItem('theme', 'dark');
+            node1 = document.getElementById('light_theme');
+            node2 = document.getElementById('dark_theme');
+            node1.setAttribute('rel', 'stylesheet alternate');
+            node2.setAttribute('rel', 'stylesheet');
+        }
+        else {
+            sessionStorage.setItem('theme', 'light');
+        }
+    </script>
 {% endif %}
-<link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css"></noscript>
+
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css" as="style"
+      onload="this.onload=null;this.rel='stylesheet'">
+<noscript>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+</noscript>
 
 {% if site.head_scripts %}
-{% for script in site.head_scripts %}
-<script src="{{ script | relative_url }}"></script>
-{% endfor %}
+    {% for script in site.head_scripts %}
+        <script src="{{ script | relative_url }}"></script>
+    {% endfor %}
 {% endif %}

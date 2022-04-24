@@ -5,9 +5,12 @@ description: >- # this means to ignore newlines until "baseurl:"
   line in _config.yml. It will appear in your document head meta (for
   Google search results) and in your feed.xml site description.
 twitter_username: username
-github_username: username
+github_username: kellen-miller
+repository: "https://github.com/kellen-miller/kellen-miller.github.io"
 minimal_mistakes_skin: air
+minimal_mistakes_skin_dark: dark
 search: true
+breadcrumbs: true
 
 # Build settings
 markdown: kramdown
@@ -16,7 +19,7 @@ remote_theme: mmistakes/minimal-mistakes
 permalink: /:categories/:title/
 paginate: 5 # amount of posts to show
 paginate_path: /page:num/
-timezone: # https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+timezone: America/New_York
 
 include:
   - _pages
@@ -30,34 +33,22 @@ plugins:
   - jekyll-include-cache
 
 author:
-  name: "First Lastname"
+  name: "Kellen Miller"
   avatar: "/assets/images/bio-photo.jpg"
   bio: "My awesome biography constrained to a sentence or two goes here."
   links:
     - label: "Website"
       icon: "fas fa-fw fa-link"
       url: "https://"
-    - label: "Twitter"
-      icon: "fab fa-fw fa-twitter-square"
-      url: "https://twitter.com/"
     - label: "GitHub"
       icon: "fab fa-fw fa-github"
-      url: "https://github.com/"
-    - label: "Instagram"
-      icon: "fab fa-fw fa-instagram"
-      url: "https://instagram.com/"
+      url: "https://github.com/kellen-miller/monorepo"
 
 footer:
   links:
-    - label: "Twitter"
-      icon: "fab fa-fw fa-twitter-square"
-      url: "https://twitter.com/"
     - label: "GitHub"
       icon: "fab fa-fw fa-github"
-      url: "https://github.com/"
-    - label: "Instagram"
-      icon: "fab fa-fw fa-instagram"
-      url: "https://instagram.com/"
+      url: "https://github.com/kellen-miller/monorepo"
 
 defaults:
   # _posts

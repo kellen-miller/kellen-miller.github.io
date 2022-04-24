@@ -22,9 +22,9 @@
                         </li>
                     {%- endfor -%}
                 </ul>
-                <i class="fas fa-fw fa-duotone fa-moon-over-sun"
-                   onclick="toggleTheme()"
-                ></i>
+                {% if site.minimal_mistakes_skin_dark %}
+                    <i class="fas fa-fw fa-adjust" aria-hidden="true" onclick="toggleTheme()"></i>
+                {% endif %}
                 {% if site.search == true %}
                     <button class="search__toggle" type="button">
                         <span class="visually-hidden">{{ site.data.ui-text[site.locale].search_label | default: "Toggle search" }}</span>

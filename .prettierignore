@@ -3,9 +3,4 @@ dist/
 .astro/
 playwright-report/
 test-results/
-.env
-.env.*
-!.env.example
-*.log
-.DS_Store
-/.idea/
+package-lock.json

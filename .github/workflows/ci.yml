@@ -2,19 +2,48 @@ name: CI
 
 on:
   pull_request:
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
-        with:
-          bundler-cache: true
-      - run: bundle exec jekyll build
+  workflow-lint:
+    uses: kellen-miller/ci/.github/workflows/gh-actions-lint.yaml@f4096214828c04a170d62e79f7b3eab035364522
+
+  lint:
+    uses: kellen-miller/ci/.github/workflows/node-lint.yaml@f4096214828c04a170d62e79f7b3eab035364522
+    with:
+      format-script: format:check
+
+  build-and-test:
+    uses: kellen-miller/ci/.github/workflows/node-test.yaml@f4096214828c04a170d62e79f7b3eab035364522
+    with:
+      test-script: test:ci
+      install-playwright: true
+      playwright-browsers: chromium
+      artifact-name: playwright-report
+      artifact-path: |
+        playwright-report/
+        test-results/
+
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs:
+      - workflow-lint
+      - lint
+      - build-and-test
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: kellen-miller/ci/.github/workflows/deploy-github-pages.yaml@f4096214828c04a170d62e79f7b3eab035364522
+    with:
+      output-directory: dist

@@ -63,9 +63,11 @@ before the first deployment; the old Jekyll publishing source is incompatible.
 `.github/workflows/ci.yml` calls SHA-pinned reusable workflows from
 [`kellen-miller/ci`](https://github.com/kellen-miller/ci). Pull requests run
 workflow validation, formatting, lint, type checks, the production build, and
-Playwright. Pushes to `main` and manual runs on `main` deploy only after all
-checks pass. The shared Pages workflow builds and uploads `dist/`, then deploys
-to the `github-pages` environment. No server or hosting adapter is required.
+Playwright. Validation runs only on pull requests.
+`.github/workflows/deploy.yml` handles publishing on pushes to `main` and
+manual runs on `main`. The shared Pages workflow builds and uploads `dist/`,
+then deploys to the `github-pages` environment. No server or hosting adapter
+is required.
 
 Svelte is optional. Add the official integration with `npx astro add svelte`
 when an interactive component needs it.

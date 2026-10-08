@@ -1,0 +1,28 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+import { SITE_TITLE } from '../consts';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead
+      title={`About · ${SITE_TITLE}`}
+      description="About Kellen Miller."
+    />
+  </head>
+  <body>
+    <Header />
+    <main>
+      <h1>About</h1>
+      <p>I'm Kellen Miller. This is a place for my notes and projects.</p>
+      <p>
+        You can find my work on{' '}
+        <a href="https://github.com/kellen-miller">GitHub</a>.
+      </p>
+    </main>
+    <Footer />
+  </body>
+</html>

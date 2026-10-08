@@ -1,0 +1,23 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    uses: kellen-miller/ci/.github/workflows/deploy-github-pages.yaml@f4096214828c04a170d62e79f7b3eab035364522
+    with:
+      output-directory: dist

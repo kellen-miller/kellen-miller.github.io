@@ -2,17 +2,13 @@ name: CI
 
 on:
   pull_request:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: true
 
 jobs:
   workflow-lint:
@@ -33,17 +29,3 @@ jobs:
       artifact-path: |
         playwright-report/
         test-results/
-
-  deploy:
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    needs:
-      - workflow-lint
-      - lint
-      - build-and-test
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-    uses: kellen-miller/ci/.github/workflows/deploy-github-pages.yaml@f4096214828c04a170d62e79f7b3eab035364522
-    with:
-      output-directory: dist

@@ -1,0 +1,342 @@
+---
+import type { EnrichedProject } from '../../data/github.ts';
+import type { ProjectId } from '../../data/projects.ts';
+import { garagePlan } from './drawing.ts';
+
+interface Props {
+  projects: readonly EnrichedProject[];
+  hotId: ProjectId | null;
+}
+
+const { projects, hotId } = Astro.props;
+const svg = garagePlan(projects, hotId);
+---
+
+<section class="garage-section" id="garage" aria-labelledby="garage-heading">
+  <div class="section-label">
+    <h2 id="garage-heading">The garage</h2>
+    <span>Plan view · 1:50</span>
+  </div>
+  <div class="garage-grid">
+    <div class="sheet-wrap">
+      <div class="scene-shell" set:html={svg} />
+      <div class="notes" id="keyed-notes">
+        <div class="notes-heading">
+          <h3>Keyed notes</h3>
+          <span>Garage — plan view · 1:50</span>
+        </div>
+        <ol>
+          {projects.map((project) => (
+            <li>
+              <a
+                class:list={['note-link', { hot: hotId === project.id }]}
+                href={`#project-${project.id}`}
+                data-call={project.id}
+                data-project-focus
+                data-project-id={project.id}
+                data-project-number={project.number}
+                data-project-name={project.repo}
+                data-project-object={project.object}
+                data-project-spec={project.spec}
+                data-project-lang={project.lang}
+                data-project-commits={project.commits}
+              >
+                <span class="plate" aria-hidden="true">
+                  {project.number}
+                </span>
+                <span class="object">{project.object}</span>
+                <span class="sub">
+                  {project.repo} · {project.lang.toLowerCase()}
+                </span>
+              </a>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </div>
+    <aside>
+      <div class="readout" aria-live="polite" aria-atomic="true">
+        <div class="readout-heading">
+          <span>
+            <i class="dot" aria-hidden="true"></i>Readout
+          </span>
+          <b id="readout-id">—</b>
+        </div>
+        <dl>
+          <dt>Entry</dt>
+          <dd id="readout-name">Hover an entry</dd>
+          <dt>Object</dt>
+          <dd id="readout-object">—</dd>
+          <dt>Spec</dt>
+          <dd id="readout-spec">—</dd>
+          <dt>Lang</dt>
+          <dd id="readout-lang">—</dd>
+          <dt>Commits/yr</dt>
+          <dd class="meter">
+            <i id="readout-meter" style="width: 0%"></i>
+            <span id="readout-commits">—</span>
+          </dd>
+        </dl>
+      </div>
+      <p class="garage-note">
+        Six projects live here. Focus a note, plate, build, or card to find its
+        object on the plan.
+      </p>
+    </aside>
+  </div>
+</section>
+
+<style>
+  .garage-section {
+    padding: var(--section-gap) var(--pad) 0;
+  }
+
+  .section-label {
+    margin: 0 0 18px;
+  }
+
+  h2,
+  h3 {
+    margin: 0;
+    color: inherit;
+    font: inherit;
+  }
+
+  .garage-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(0, 4fr);
+    gap: clamp(20px, 4vw, 56px);
+    align-items: start;
+  }
+
+  .sheet-wrap {
+    display: grid;
+    min-width: 0;
+    gap: 14px;
+  }
+
+  .scene-shell :global(svg) {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  .scene-shell :global([data-obj]),
+  .scene-shell :global(.callout) {
+    transition: opacity 180ms ease;
+  }
+
+  .scene-shell :global(.scene.focus [data-obj]:not(.on)),
+  .scene-shell :global(.scene.focus .callout:not(.on)) {
+    opacity: 0.18;
+  }
+
+  .scene-shell :global(.callout) {
+    cursor: pointer;
+  }
+
+  .scene-shell :global(.callout:focus-visible rect) {
+    stroke: var(--acc);
+    stroke-width: 2px;
+  }
+
+  .notes {
+    border-top: 1px solid var(--ink);
+  }
+
+  .notes-heading {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line);
+    color: var(--ink);
+    font:
+      500 11px/1.4 var(--mono),
+      ui-monospace,
+      monospace;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .notes-heading span {
+    color: var(--mute);
+    text-align: right;
+  }
+
+  ol {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 24px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    min-width: 0;
+    border-bottom: 1px dashed var(--line);
+  }
+
+  .note-link {
+    display: grid;
+    min-height: 48px;
+    grid-template-columns: 38px minmax(0, 1fr);
+    align-items: center;
+    gap: 0 10px;
+    padding: 7px 0;
+    color: inherit;
+    text-decoration: none;
+    transition: opacity 180ms ease;
+  }
+
+  .note-link.on .object,
+  .note-link:hover .object,
+  .note-link:focus-visible .object {
+    color: var(--acc-ink);
+  }
+
+  .plate {
+    display: grid;
+    width: 34px;
+    height: 24px;
+    grid-row: 1 / span 2;
+    place-items: center;
+    border-radius: 5px;
+    background: var(--ink);
+    color: var(--bg);
+    font:
+      800 13px/1 var(--mono),
+      ui-monospace,
+      monospace;
+  }
+
+  .hot .plate {
+    background: var(--acc);
+    color: var(--on-acc);
+  }
+
+  .object,
+  .sub {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .object {
+    color: var(--ink);
+    font:
+      500 11px/1.3 var(--mono),
+      ui-monospace,
+      monospace;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .sub {
+    color: var(--mute);
+    font:
+      11px/1.3 var(--mono),
+      ui-monospace,
+      monospace;
+  }
+
+  aside {
+    display: grid;
+    gap: 16px;
+    align-content: start;
+  }
+
+  .readout {
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--mute);
+    font:
+      11px/1.5 var(--mono),
+      ui-monospace,
+      monospace;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .readout-heading {
+    display: flex;
+    justify-content: space-between;
+    padding: 7px 12px;
+    border-bottom: 1px dashed var(--line);
+  }
+
+  .readout-heading b {
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  .dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-right: 6px;
+    border-radius: 50%;
+    background: var(--acc);
+    vertical-align: 0;
+  }
+
+  dl {
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr);
+    gap: 3px 12px;
+    margin: 0;
+    padding: 10px 12px 12px;
+  }
+
+  dt {
+    color: var(--mute);
+  }
+
+  dd {
+    min-width: 0;
+    margin: 0;
+    overflow: hidden;
+    color: var(--ink);
+    text-overflow: ellipsis;
+    text-transform: none;
+    letter-spacing: 0;
+    white-space: nowrap;
+  }
+
+  .meter {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 44px;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .meter i {
+    display: block;
+    height: 6px;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--acc) 0 2px,
+      transparent 2px 4px
+    );
+  }
+
+  .garage-note {
+    margin: 0;
+    color: var(--mute);
+    font-size: 15px;
+  }
+
+  @media (max-width: 900px) {
+    .garage-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media (max-width: 560px) {
+    ol {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

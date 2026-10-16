@@ -1,5 +1,13 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
+import snapshot from '../src/data/projects.snapshot.json' with { type: 'json' };
+
+const snapshotProjects = Object.values(snapshot.projects);
+const snapshotCommits = snapshotProjects.reduce(
+  (total, project) => total + project.commits,
+  0,
+);
+const snapshotBuilds = snapshotProjects.filter((project) => project.build);
 
 test('shared navigation points to real sections and pages', async ({
   page,
@@ -33,6 +41,203 @@ test('shared navigation points to real sections and pages', async ({
     'aria-current',
     'page',
   );
+});
+
+test('homepage ships real data and its full garage drawing in static HTML', async ({
+  page,
+  request,
+}) => {
+  const browserRequests: string[] = [];
+  page.on('request', (requestEvent) =>
+    browserRequests.push(requestEvent.url()),
+  );
+  const response = await page.goto('/');
+  const html = await response?.text();
+
+  await expect(
+    page.getByRole('heading', { name: 'Notes from the garage.' }),
+  ).toBeVisible();
+  await expect(page.locator('.stats')).toContainText(String(snapshotCommits));
+  await expect(page.locator('.stats')).toContainText('Posts 00');
+  await expect(page.locator('.scene [data-obj]')).toHaveCount(
+    snapshotProjects.length,
+  );
+  await expect(page.locator('.project-card')).toHaveCount(
+    snapshotProjects.length,
+  );
+  await expect(page.locator('.project-card svg [data-obj]')).toHaveCount(
+    snapshotProjects.length,
+  );
+  await expect(page.locator('.shop-log [data-call]')).toHaveCount(
+    snapshotBuilds.length,
+  );
+  const buildRow = page.locator('.shop-log li:has(.build)').first();
+  const rowBox = await buildRow.boundingBox();
+  const linkBox = await buildRow.locator('.build').boundingBox();
+  expect(linkBox?.width).toBe(rowBox?.width);
+  await expect(
+    page.locator('.project-card[data-project-id="chief"]'),
+  ).toHaveAttribute(
+    'data-project-commits',
+    String(snapshot.projects.chief.commits),
+  );
+  await expect(
+    page.locator('.project-card[data-project-id="venae-machinae"]'),
+  ).toHaveAttribute('href', 'https://github.com/kellen-miller/venae-machinae');
+  expect(html).toContain('<animateTransform');
+  expect(html).toContain('begin="indefinite"');
+  expect(html).not.toContain('document.createElement');
+  expect(browserRequests.some((url) => url.includes('api.github.com'))).toBe(
+    false,
+  );
+  expect((await request.get('/')).ok()).toBe(true);
+});
+
+test('shop log, plan, keyed notes, and cards share project focus', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await expect(page.locator('#readout-name')).toHaveText('Hover an entry');
+  await expect(page.locator('.scene')).not.toHaveClass(/focus/);
+
+  const chiefBuild = page.locator('.shop-log [data-call="chief"]');
+  await chiefBuild.hover();
+  await expect(page.locator('#readout-id')).toHaveText('#04');
+  await expect(
+    page.locator('.project-card[data-project-id="chief"]'),
+  ).toHaveClass(/on/);
+  await expect(page.locator('.scene [data-obj="chief"]')).toHaveClass(/on/);
+  await expect(page.locator('#keyed-notes [data-call="chief"]')).toHaveClass(
+    /on/,
+  );
+  await expect(chiefBuild).toHaveClass(/on/);
+
+  await page.mouse.move(0, 0);
+  await expect(page.locator('#readout-name')).toHaveText('Hover an entry');
+
+  const chiefPlate = page.locator('.scene [data-call="chief"]');
+  await chiefPlate.hover();
+  await expect(page.locator('#readout-id')).toHaveText('#04');
+  await expect(page.locator('.scene .led')).toHaveCSS('animation-name', 'led');
+  await chiefPlate.click();
+  await expect(page).toHaveURL(/#project-chief$/);
+  await expect(page.locator('#project-chief')).toBeFocused();
+
+  await page.mouse.move(0, 0);
+  const deburrNote = page.locator('#keyed-notes [data-call="deburr"]');
+  await deburrNote.focus();
+  await expect(page.locator('#readout-id')).toHaveText('#03');
+  await chiefBuild.hover();
+  await expect(page.locator('#readout-id')).toHaveText('#04');
+  await page.mouse.move(0, 0);
+  await expect(page.locator('#readout-id')).toHaveText('#03');
+
+  const deburrCard = page.locator('.project-card[data-project-id="deburr"]');
+  await deburrCard.hover();
+  await expect(page.locator('#readout-id')).toHaveText('#03');
+  await expect(deburrCard.locator('.spark').first()).toHaveCSS(
+    'animation-name',
+    'spark',
+  );
+
+  await page.locator('.project-card[data-project-id="skills"]').hover();
+  await expect(page.locator('#readout-id')).toHaveText('#06');
+});
+
+test('focus follows reduced-motion preference changes', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  await page.evaluate(() => {
+    const svgAnimation = SVGAnimateTransformElement.prototype;
+    let started = 0;
+    let stopped = 0;
+    Object.defineProperty(svgAnimation, 'beginElement', {
+      configurable: true,
+      value() {
+        started += 1;
+      },
+    });
+    Object.defineProperty(svgAnimation, 'endElement', {
+      configurable: true,
+      value() {
+        stopped += 1;
+      },
+    });
+    Object.defineProperty(window, 'garageMotionCalls', {
+      configurable: true,
+      get: () => ({ started, stopped }),
+    });
+  });
+
+  await page.locator('.project-card[data-project-id="celerity"]').hover();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window as unknown as { garageMotionCalls: { started: number } })
+            .garageMotionCalls.started,
+      ),
+    )
+    .toBe(0);
+  await expect(page.locator('.spark').first()).toHaveCSS(
+    'animation-name',
+    'none',
+  );
+
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window as unknown as { garageMotionCalls: { started: number } })
+            .garageMotionCalls.started,
+      ),
+    )
+    .toBe(1);
+  await page.mouse.move(0, 0);
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window as unknown as { garageMotionCalls: { stopped: number } })
+            .garageMotionCalls.stopped,
+      ),
+    )
+    .toBeGreaterThan(0);
+});
+
+test('garage plan and project cards remain usable without JavaScript', async ({
+  browser,
+}) => {
+  const context = await browser.newContext({ javaScriptEnabled: false });
+  const page = await context.newPage();
+  await page.goto('/');
+  await expect(page.locator('.scene [data-obj]')).toHaveCount(6);
+  await expect(page.locator('.project-card')).toHaveCount(6);
+  await expect(page.locator('.scene a[data-call="chief"]')).toHaveAttribute(
+    'href',
+    '#project-chief',
+  );
+  await page.locator('.scene a[data-call="chief"]').click();
+  await expect(page).toHaveURL(/#project-chief$/);
+  await expect(page.locator('#project-chief')).toBeInViewport();
+  await context.close();
+});
+
+test('homepage stacks cleanly at 400 pixels', async ({ page }) => {
+  await page.setViewportSize({ width: 400, height: 900 });
+  await page.goto('/');
+  const dimensions = await page.evaluate(() => ({
+    scrollWidth: document.documentElement.scrollWidth,
+    clientWidth: document.documentElement.clientWidth,
+    projectColumns: getComputedStyle(document.querySelector('.project-grid')!)
+      .gridTemplateColumns,
+    heroColumns: getComputedStyle(document.querySelector('.hero')!)
+      .gridTemplateColumns,
+  }));
+  expect(dimensions.scrollWidth).toBe(dimensions.clientWidth);
+  expect(dimensions.projectColumns.trim().split(/\s+/)).toHaveLength(1);
+  expect(dimensions.heroColumns.trim().split(/\s+/)).toHaveLength(1);
 });
 
 test('theme toggle persists and handles a blocked localStorage write', async ({

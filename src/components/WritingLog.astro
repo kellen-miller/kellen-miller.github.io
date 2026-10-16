@@ -43,23 +43,7 @@ const { posts } = Astro.props;
   }
 
   .section-label {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 16px;
-    border-bottom: 1px solid var(--line);
-    margin-bottom: 4px;
-    padding-bottom: 9px;
-    color: var(--mute);
-    font: 500 11px/1.4 var(--mono);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  h2 {
-    margin: 0;
-    color: var(--mute);
-    font: inherit;
+    margin-bottom: 8px;
   }
 
   ol {
@@ -70,7 +54,7 @@ const { posts } = Astro.props;
 
   li {
     display: grid;
-    grid-template-columns: 82px minmax(0, 1fr) auto;
+    grid-template-columns: 120px minmax(0, 1fr) auto;
     align-items: baseline;
     gap: 14px;
     border-bottom: 1px dashed var(--line);
@@ -87,7 +71,7 @@ const { posts } = Astro.props;
 
   h3 {
     margin: 0;
-    font: 500 15px/1.4 var(--mono);
+    font: 500 17px/1.4 var(--mono);
   }
 
   h3 a {

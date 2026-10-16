@@ -1,27 +1,365 @@
 ---
-import BaseHead from '../components/BaseHead.astro';
-import Footer from '../components/Footer.astro';
-import Header from '../components/Header.astro';
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ShopLog from '../components/ShopLog.astro';
+import GaragePlan from '../components/garage/GaragePlan.astro';
+import ProjectCard from '../components/garage/ProjectCard.astro';
+import WritingLog from '../components/WritingLog.astro';
+import { fetchProjectsForBuild } from '../data/github.ts';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+
+const activity = await fetchProjectsForBuild(
+  process.env.GITHUB_DATA_MODE === 'snapshot' ? 'snapshot' : 'live',
+  new Date(),
+);
+const projects = activity.projects;
+const posts = (await getCollection('blog')).sort(
+  (left, right) => right.data.pubDate.getTime() - left.data.pubDate.getTime(),
+);
+const totalCommits = projects.reduce(
+  (sum, project) => sum + project.commits,
+  0,
+);
+const hottest = Math.max(0, ...projects.map((project) => project.commits));
+const hotId =
+  hottest > 0
+    ? (projects.find((project) => project.commits === hottest)?.id ?? null)
+    : null;
 ---
 
-<!doctype html>
-<html lang="en">
-  <head>
-    <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
-  </head>
-  <body>
-    <Header />
-    <main>
-      <h1>Kellen Miller</h1>
-      <p>{SITE_DESCRIPTION}</p>
-      <p>
-        <a href="/blog/">Read the blog →</a>
-      </p>
-      <p>
-        <a href="https://github.com/kellen-miller">Find me on GitHub ↗</a>
-      </p>
-    </main>
-    <Footer />
-  </body>
-</html>
+<BaseLayout title={SITE_TITLE} description={SITE_DESCRIPTION}>
+  <div class="homepage" data-max-commits={hottest}>
+    <section class="hero" aria-labelledby="page-title">
+      <div class="intro">
+        <p class="stats">
+          <span>
+            Projects <b>{String(projects.length).padStart(2, '0')}</b>
+          </span>
+          <span>
+            Commits, last 12 mo <b>{totalCommits}</b>
+          </span>
+          <span>
+            Posts <b>{String(posts.length).padStart(2, '0')}</b>
+          </span>
+        </p>
+        <h1 id="page-title">
+          Notes from the <em>garage</em>.
+        </h1>
+        <p class="dek">
+          I'm Kellen. I build backend systems for a living. After hours I'm in
+          the garage: control software for a rotary engine, wiring design, and
+          the tools I wish existed. These are my notes.
+        </p>
+      </div>
+      <ShopLog projects={projects} posts={posts} hotId={hotId} />
+    </section>
+
+    <GaragePlan projects={projects} hotId={hotId} />
+
+    <section class="projects" id="projects" aria-labelledby="projects-heading">
+      <div class="section-label">
+        <h2 id="projects-heading">Projects</h2>
+        <span>{String(projects.length).padStart(2, '0')} entries</span>
+      </div>
+      <div class="project-grid">
+        {projects.map((project) => (
+          <ProjectCard project={project} hotId={hotId} maxCommits={hottest} />
+        ))}
+      </div>
+    </section>
+
+    <WritingLog posts={posts} />
+  </div>
+</BaseLayout>
+
+<script>
+  const page = document.querySelector<HTMLElement>('.homepage');
+  const readout = {
+    id: document.querySelector<HTMLElement>('#readout-id'),
+    name: document.querySelector<HTMLElement>('#readout-name'),
+    object: document.querySelector<HTMLElement>('#readout-object'),
+    spec: document.querySelector<HTMLElement>('#readout-spec'),
+    lang: document.querySelector<HTMLElement>('#readout-lang'),
+    commits: document.querySelector<HTMLElement>('#readout-commits'),
+    meter: document.querySelector<HTMLElement>('#readout-meter'),
+  };
+  const focusSources = [
+    ...document.querySelectorAll<HTMLElement>('[data-project-focus]'),
+  ];
+  const callouts = [...document.querySelectorAll<HTMLElement>('[data-call]')];
+  const objects = [...document.querySelectorAll<HTMLElement>('[data-obj]')];
+  const cards = [...document.querySelectorAll<HTMLElement>('.project-card')];
+  const rotorAnimations = [
+    ...document.querySelectorAll<SVGAnimateTransformElement>(
+      '.rotor-animation',
+    ),
+  ];
+  const motionPreference = window.matchMedia(
+    '(prefers-reduced-motion: reduce)',
+  );
+  let pointerProject: string | null = null;
+  let keyboardProject: string | null = null;
+  let activeProject: string | null = null;
+
+  const renderFocus = (id: string | null) => {
+    activeProject = id;
+    const focused = focusSources.find(
+      (source) => source.dataset.projectId === id,
+    );
+    const maxCommits = Number(page?.dataset.maxCommits ?? 0);
+    const commitCount = Number(focused?.dataset.projectCommits ?? 0);
+    const focusedProject = id
+      ? {
+          number: focused?.dataset.projectNumber ?? '',
+          name: focused?.dataset.projectName ?? '',
+          object: focused?.dataset.projectObject ?? '',
+          spec: focused?.dataset.projectSpec ?? '',
+          lang: focused?.dataset.projectLang ?? '',
+          commits: commitCount,
+        }
+      : null;
+
+    document.querySelector('.scene')?.classList.toggle('focus', Boolean(id));
+    document
+      .querySelector('#keyed-notes')
+      ?.classList.toggle('focus', Boolean(id));
+    for (const element of [...callouts, ...objects]) {
+      element.classList.toggle(
+        'on',
+        Boolean(id) &&
+          (element.dataset.call === id || element.dataset.obj === id),
+      );
+    }
+    for (const card of cards)
+      card.classList.toggle('on', card.dataset.projectId === id);
+
+    if (readout.id)
+      readout.id.textContent = focusedProject
+        ? `#${focusedProject.number}`
+        : '—';
+    if (readout.name)
+      readout.name.textContent = focusedProject?.name ?? 'Hover an entry';
+    if (readout.object)
+      readout.object.textContent = focusedProject?.object ?? '—';
+    if (readout.spec) readout.spec.textContent = focusedProject?.spec ?? '—';
+    if (readout.lang) readout.lang.textContent = focusedProject?.lang ?? '—';
+    if (readout.commits)
+      readout.commits.textContent = focusedProject ? String(commitCount) : '—';
+    if (readout.meter)
+      readout.meter.style.width =
+        focusedProject && maxCommits > 0
+          ? `${(commitCount / maxCommits) * 100}%`
+          : '0%';
+
+    for (const animation of rotorAnimations) {
+      if (id === 'celerity' && !motionPreference.matches)
+        animation.beginElement();
+      else animation.endElement();
+    }
+  };
+
+  const updateFocus = () => renderFocus(pointerProject ?? keyboardProject);
+
+  for (const source of focusSources) {
+    source.addEventListener('pointerenter', (event) => {
+      if (event.pointerType !== 'touch') {
+        pointerProject = source.dataset.projectId ?? null;
+        updateFocus();
+      }
+    });
+    source.addEventListener('pointerleave', (event) => {
+      if (
+        event.pointerType !== 'touch' &&
+        pointerProject === source.dataset.projectId
+      ) {
+        pointerProject = null;
+        updateFocus();
+      }
+    });
+    source.addEventListener('focus', () => {
+      keyboardProject = source.dataset.projectId ?? null;
+      updateFocus();
+    });
+    source.addEventListener('blur', () => {
+      if (keyboardProject === source.dataset.projectId) {
+        keyboardProject = null;
+        updateFocus();
+      }
+    });
+    source.addEventListener('click', () => {
+      const target = source.getAttribute('href')?.startsWith('#project-')
+        ? document.querySelector<HTMLElement>(source.getAttribute('href')!)
+        : null;
+      if (target)
+        requestAnimationFrame(() => target.focus({ preventScroll: true }));
+    });
+  }
+
+  window.addEventListener('hashchange', () => {
+    const target = document.getElementById(location.hash.slice(1));
+    if (target?.matches('.project-card')) {
+      keyboardProject = target.dataset.projectId ?? null;
+      updateFocus();
+      target.focus({ preventScroll: true });
+    }
+  });
+
+  motionPreference.addEventListener('change', () => {
+    if (motionPreference.matches) {
+      for (const animation of rotorAnimations) animation.endElement();
+    } else if (activeProject === 'celerity') {
+      for (const animation of rotorAnimations) animation.beginElement();
+    }
+  });
+</script>
+
+<style>
+  .homepage {
+    --home-pad: var(--pad);
+  }
+
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: clamp(20px, 4vw, 56px);
+    align-items: start;
+    padding: clamp(24px, 5vw, 56px) var(--home-pad) 0;
+  }
+
+  .stats {
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    margin: 0;
+    color: var(--mute);
+    font:
+      12px/1.5 var(--mono),
+      ui-monospace,
+      monospace;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .stats b {
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  h1 {
+    margin: 16px 0 18px;
+    color: var(--ink);
+    font:
+      500 clamp(36px, 5.4vw, 76px)/1.05 var(--mono),
+      ui-monospace,
+      monospace;
+    letter-spacing: -0.04em;
+    text-transform: uppercase;
+    text-wrap: balance;
+  }
+
+  h1 em {
+    color: var(--acc-ink);
+    font-style: normal;
+  }
+
+  .dek {
+    max-width: 46ch;
+    margin: 0;
+    color: var(--mute);
+    font-size: 17px;
+    line-height: 1.55;
+  }
+
+  .projects {
+    padding: var(--section-gap) var(--pad) 0;
+    scroll-margin-top: 28px;
+  }
+
+  .section-label {
+    margin: 0 0 18px;
+  }
+
+  .project-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background: var(--line);
+  }
+
+  .project-grid :global(.project-card) {
+    border: 0;
+  }
+
+  .project-grid :global(.project-card.on) {
+    background: var(--card-on);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .homepage :global(.scene .on .spark),
+    .project-grid :global(.project-card.on .spark) {
+      animation: spark 500ms steps(2, jump-none) infinite;
+    }
+
+    .homepage :global(.scene .on .spark.s1),
+    .project-grid :global(.project-card.on .spark.s1) {
+      animation-delay: 120ms;
+    }
+
+    .homepage :global(.scene .on .spark.s2),
+    .project-grid :global(.project-card.on .spark.s2) {
+      animation-delay: 250ms;
+    }
+
+    .homepage :global(.scene .on .spark.s3),
+    .project-grid :global(.project-card.on .spark.s3) {
+      animation-delay: 370ms;
+    }
+
+    .homepage :global(.scene .on .led),
+    .project-grid :global(.project-card.on .led) {
+      animation: led 1.4s steps(2, jump-none) infinite;
+    }
+  }
+
+  @keyframes spark {
+    50% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes led {
+    50% {
+      opacity: 0.15;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .hero {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .project-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 560px) {
+    .project-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .hero {
+      gap: 28px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scene-shell :global([data-obj]),
+    .scene-shell :global(.callout),
+    .project-card {
+      transition: none;
+    }
+  }
+</style>

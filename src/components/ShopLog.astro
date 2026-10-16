@@ -1,0 +1,252 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import FormattedDate from './FormattedDate.astro';
+import type { EnrichedProject } from '../data/github.ts';
+
+interface Props {
+  projects: readonly EnrichedProject[];
+  posts: CollectionEntry<'blog'>[];
+  hotId: string | null;
+}
+
+const { projects, posts, hotId } = Astro.props;
+const entries = [
+  ...posts.map((post) => ({
+    type: 'note' as const,
+    date: post.data.pubDate,
+    post,
+  })),
+  ...projects.flatMap((project) =>
+    project.build
+      ? [
+          {
+            type: 'build' as const,
+            date: new Date(project.build.date),
+            project,
+          },
+        ]
+      : [],
+  ),
+]
+  .sort((left, right) => right.date.getTime() - left.date.getTime())
+  .slice(0, 8);
+---
+
+<section class="shop-log" aria-labelledby="shop-log-heading">
+  <div class="shop-heading">
+    <h2 id="shop-log-heading">Shop log</h2>
+    <span>Notes + builds · newest first</span>
+  </div>
+  {entries.length ? (
+    <ol>
+      {entries.map((entry) =>
+        entry.type === 'note' ? (
+          <li class="note">
+            <FormattedDate date={entry.date} />
+            <span class="kind">Note</span>
+            <a class="title" href={`/blog/${entry.post.id}/`}>
+              {entry.post.data.title}
+            </a>
+            <span class="tag">{entry.post.data.tag ?? 'Writing'}</span>
+          </li>
+        ) : (
+          <li>
+            <a
+              class:list={['build', { hot: hotId === entry.project.id }]}
+              href={entry.project.build!.url}
+              data-call={entry.project.id}
+              data-project-focus
+              data-project-id={entry.project.id}
+              data-project-number={entry.project.number}
+              data-project-name={entry.project.repo}
+              data-project-object={entry.project.object}
+              data-project-spec={entry.project.spec}
+              data-project-lang={entry.project.lang}
+              data-project-commits={entry.project.commits}
+            >
+              <FormattedDate date={new Date(entry.project.build!.date)} />
+              <span
+                class="plate"
+                aria-label={`Project ${entry.project.number}`}
+              >
+                {entry.project.number}
+              </span>
+              <span class="title">{entry.project.build!.subject}</span>
+              <span class="tag">{entry.project.repo}</span>
+            </a>
+          </li>
+        ),
+      )}
+    </ol>
+  ) : (
+    <p class="empty">No notes or builds logged yet.</p>
+  )}
+</section>
+
+<style>
+  .shop-log {
+    border-top: 1px solid var(--ink);
+  }
+
+  .shop-heading {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line);
+    color: var(--ink);
+    font:
+      500 11px/1.4 var(--mono),
+      ui-monospace,
+      monospace;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .shop-heading h2 {
+    margin: 0;
+    font: inherit;
+  }
+
+  .shop-heading span,
+  time,
+  .tag {
+    color: var(--mute);
+  }
+
+  .shop-heading span {
+    text-align: right;
+  }
+
+  ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    min-width: 0;
+    border-bottom: 1px dashed var(--line);
+  }
+
+  .note,
+  .build {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 92px 44px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 0;
+    color: var(--ink);
+    font:
+      13px/1.4 var(--mono),
+      ui-monospace,
+      monospace;
+    text-decoration: none;
+  }
+
+  .build {
+    width: 100%;
+    padding: 10px 0;
+  }
+
+  .note :global(time),
+  .build :global(time),
+  .tag {
+    color: var(--mute);
+    font-size: 12px;
+  }
+
+  .tag {
+    overflow: hidden;
+    text-align: right;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .note .title {
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .note .title:hover,
+  .note .title:focus-visible,
+  .build:hover .title,
+  .build:focus-visible .title,
+  .build.on .title {
+    color: var(--acc-ink);
+  }
+
+  .kind {
+    display: grid;
+    height: 22px;
+    place-items: center;
+    border: 1px solid var(--acc);
+    border-radius: 5px;
+    color: var(--acc-ink);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .plate {
+    display: grid;
+    min-width: 34px;
+    height: 22px;
+    place-items: center;
+    border-radius: 5px;
+    background: var(--ink);
+    color: var(--bg);
+    font:
+      800 12px/1 var(--mono),
+      ui-monospace,
+      monospace;
+  }
+
+  .hot .plate {
+    background: var(--acc);
+    color: var(--on-acc);
+  }
+
+  .build:focus-visible {
+    outline-offset: 2px;
+  }
+
+  .empty {
+    margin: 0;
+    padding: 18px 0;
+    color: var(--mute);
+  }
+
+  @media (max-width: 560px) {
+    .note,
+    .build {
+      grid-template-columns: 44px minmax(0, 1fr);
+    }
+
+    .note :global(time),
+    .build :global(time),
+    .tag {
+      display: none;
+    }
+
+    .note .kind {
+      grid-column: 1;
+    }
+
+    .note .title {
+      grid-column: 2;
+    }
+
+    .build .title {
+      grid-column: 2;
+    }
+  }
+</style>

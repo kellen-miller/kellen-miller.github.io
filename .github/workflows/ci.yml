@@ -1,24 +1,46 @@
 name: CI
-
-on:
-  pull_request:
-
+'on':
+  pull_request: null
 permissions:
   contents: read
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      changes: ${{ steps.paths.outputs.changes }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - id: paths
+        uses: kellen-miller/ci/.github/actions/changed-paths@75c70f9d5db7117810669e0af01fd2eafdc396c6
+        with:
+          filters: |-
+            {
+              "site": [
+                "src/**",
+                "public/**",
+                "tests/**",
+                "package.json",
+                "package-lock.json",
+                "*.config.*",
+                "tsconfig*.json",
+                ".node-version",
+                ".nvmrc",
+                ".npmrc",
+                ".github/workflows/**"
+              ]
+            }
   workflow-lint:
-    uses: kellen-miller/ci/.github/workflows/gh-actions-lint.yaml@f4096214828c04a170d62e79f7b3eab035364522
-
+    uses: kellen-miller/ci/.github/workflows/gh-actions-lint.yaml@75c70f9d5db7117810669e0af01fd2eafdc396c6
   lint:
     uses: kellen-miller/ci/.github/workflows/node-lint.yaml@f4096214828c04a170d62e79f7b3eab035364522
     with:
       format-script: format:check
-
   build-and-test:
     uses: kellen-miller/ci/.github/workflows/node-test.yaml@d107bb649679d9eb225160cd4fcb8f3244a0f0ef
     with:
@@ -29,3 +51,5 @@ jobs:
       artifact-path: |
         playwright-report/
         test-results/
+    needs: changes
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || fromJSON(needs.changes.outputs.changes).site) }}

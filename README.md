@@ -1,73 +1,52 @@
 # Kellen Miller
 
-Static personal site built from Astro's official `blog` starter using
-`npm create astro@latest -- --template blog`. Includes Markdown/MDX posts,
-optimized images, local fonts, RSS, and a sitemap. The example posts are starter
-content to replace; the previous Jekyll samples and theme have been removed.
+A static personal site built with Astro. It presents six public projects, a garage plan, current public GitHub activity, and a writing log. Writing launches empty; starter examples live only in test fixtures.
 
 ## Develop
 
-Use Node 24 (see `.node-version`) and npm. Commit `package-lock.json` when
-dependencies change.
+Use Node 24 and npm.
 
 ```sh
 npm ci
 npm run dev
 ```
 
-Edit site identity in `src/consts.ts`, pages in `src/pages/`, and posts in
-`src/content/blog/`. Post frontmatter requires `title`, `description`, and
-`pubDate`; `updatedDate` and `heroImage` are optional. New posts appear in the
-blog and RSS feed automatically. Assets under `public/` are copied unchanged.
+Published Markdown or MDX goes in `src/content/blog/`. Required frontmatter is `title`, `description`, and `pubDate`; `updatedDate`, `tag`, and `heroImage` are optional. Every file in that directory becomes a public page and feed item. Keep examples and unpublished drafts elsewhere; `tests/fixtures/blog/` is for isolated rendering checks only.
+
+Project metadata lives in `src/data/projects.ts`. The saved GitHub activity snapshot is `src/data/projects.snapshot.json`. Normal `npm run build` fetches current public activity and falls back to that snapshot on failure. Update the snapshot only from a successful live collection; never replace it with partial data.
+
+Refresh the snapshot from a successful GitHub collection with Node 24. The script checks the result source before writing, so an incomplete fetch leaves the saved file alone. Set `GITHUB_TOKEN` in the shell environment if you need authenticated API limits; the script never prints it.
+
+```sh
+node --experimental-strip-types --input-type=module <<'NODE'
+import { writeFile } from 'node:fs/promises';
+import { fetchProjectsForBuild } from './src/data/github.ts';
+
+const result = await fetchProjectsForBuild('live', new Date());
+if (result.source !== 'github') {
+  throw new Error('GitHub fetch incomplete; snapshot unchanged');
+}
+
+const projects = Object.fromEntries(
+  result.projects.map(({ id, commits, build }) => [id, { commits, build }]),
+);
+await writeFile(
+  'src/data/projects.snapshot.json',
+  `${JSON.stringify({ asOf: result.asOf, projects }, null, 2)}\n`,
+);
+console.log(`Snapshot refreshed: ${result.asOf}`);
+NODE
+```
 
 ## Validate
 
 ```sh
-npx playwright install chromium
+npm ci
 npm run validate
 ```
 
-| Command                | Purpose                                                                 |
-| ---------------------- | ----------------------------------------------------------------------- |
-| `npm run format`       | Format supported files, including Astro, MDX, CSS, and YAML             |
-| `npm run format:check` | Check formatting without modifying files                                |
-| `npm run lint`         | ESLint for JavaScript, TypeScript, Astro, accessibility, and Playwright |
-| `npm run check`        | Astro diagnostics and TypeScript checks                                 |
-| `npm run build`        | Generate the static site in `dist/`                                     |
-| `npm run preview`      | Serve the production build locally                                      |
-| `npm test`             | Test the existing production build on desktop and mobile                |
-| `npm run test:ci`      | Build, then run browser tests                                           |
-| `npm run validate`     | Run formatting, lint, type checks, build, and tests                     |
-
-Browser tests verify navigation, Markdown/MDX output, local links and assets,
-canonical metadata, RSS, sitemap, 404 handling, responsive layouts, and
-accessibility. They also check that content works without JavaScript. Playwright
-starts and stops the production preview itself; build before running `npm test`.
-The test preview uses `--ignore-lock` to stay in the foreground when launched by
-an AI agent, so Playwright can stop it after the run.
-Reports appear in `playwright-report/`; failures retain screenshots and traces
-in `test-results/`. CI uploads both directories, including after test failures.
-
-Tooling follows Astro's [editor setup](https://docs.astro.build/en/editor-setup/)
-and [testing guidance](https://docs.astro.build/en/guides/testing/):
-`eslint-plugin-astro`, the official `prettier-plugin-astro`, `astro check`, and
-Playwright against the production preview.
+`npm run build:test` selects the committed activity snapshot and makes no GitHub requests. `npm run test:ci` builds in snapshot mode before Playwright. `npm run validate` runs formatting, lint, Astro checks, a snapshot build, and browser tests. Playwright uses port 4323 and manages its own preview process. Local fonts are JetBrains Mono and Instrument Sans under their included SIL Open Font Licenses.
 
 ## GitHub Pages
 
-The site URL is `https://kellen-miller.github.io`, configured in
-`astro.config.mjs`. This user-site repository needs no project subpath. Set
-**Settings → Pages → Build and deployment → Source** to **GitHub Actions**
-before the first deployment; the old Jekyll publishing source is incompatible.
-
-`.github/workflows/ci.yml` calls SHA-pinned reusable workflows from
-[`kellen-miller/ci`](https://github.com/kellen-miller/ci). Pull requests run
-workflow validation, formatting, lint, type checks, the production build, and
-Playwright. Validation runs only on pull requests.
-`.github/workflows/deploy.yml` handles publishing on pushes to `main` and
-manual runs on `main`. The shared Pages workflow builds and uploads `dist/`,
-then deploys to the `github-pages` environment. No server or hosting adapter
-is required.
-
-Svelte is optional. Add the official integration with `npx astro add svelte`
-when an interactive component needs it.
+The site URL is `https://kellen-miller.github.io`, configured in `astro.config.mjs`. Pull requests run validation; deployments run on pushes to `main` or manual runs on `main` through the shared workflows in `.github/workflows/`.

@@ -1,6 +1,6 @@
+import rss from '@astrojs/rss';
 import type { APIRoute } from 'astro';
 import { getCollection } from 'astro:content';
-import rss from '@astrojs/rss';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 
 export const GET: APIRoute = async (context) => {
@@ -16,8 +16,11 @@ export const GET: APIRoute = async (context) => {
     description: SITE_DESCRIPTION,
     site: context.site,
     items: posts.map((post) => ({
-      ...post.data,
+      title: post.data.title,
+      description: post.data.description,
+      pubDate: post.data.pubDate,
       link: `/blog/${post.id}/`,
+      categories: post.data.tag ? [post.data.tag] : undefined,
     })),
   });
 };

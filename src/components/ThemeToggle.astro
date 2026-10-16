@@ -1,0 +1,51 @@
+<button class="theme-toggle" type="button" aria-label="Switch to dark theme">
+  <span aria-hidden="true">Dark</span>
+</button>
+
+<script>
+  const toggle = document.querySelector<HTMLButtonElement>('.theme-toggle');
+
+  if (toggle) {
+    const updateToggle = () => {
+      const isDark = document.documentElement.dataset.theme === 'dark';
+      const nextTheme = isDark ? 'light' : 'dark';
+      toggle.textContent = nextTheme === 'dark' ? 'Dark' : 'Light';
+      toggle.setAttribute('aria-label', `Switch to ${nextTheme} theme`);
+    };
+
+    updateToggle();
+
+    toggle.addEventListener('click', () => {
+      const nextTheme =
+        document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+      document.documentElement.dataset.theme = nextTheme;
+
+      try {
+        localStorage.setItem('km-theme', nextTheme);
+      } catch {
+        // The theme remains usable for this page when storage is unavailable.
+      }
+
+      updateToggle();
+    });
+  }
+</script>
+
+<style>
+  .theme-toggle {
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--mute);
+    cursor: pointer;
+    font: inherit;
+    letter-spacing: inherit;
+    padding: 4px 10px;
+    text-transform: uppercase;
+  }
+
+  .theme-toggle:hover {
+    border-color: var(--acc);
+    color: var(--ink);
+  }
+</style>

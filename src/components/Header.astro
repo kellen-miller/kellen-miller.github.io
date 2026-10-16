@@ -1,50 +1,67 @@
 ---
-import { SITE_TITLE } from '../consts';
 import HeaderLink from './HeaderLink.astro';
+import ThemeToggle from './ThemeToggle.astro';
+import { SITE_TITLE } from '../consts';
 ---
 
-<header>
+<header class="site-header">
   <a class="site-title" href="/">
     {SITE_TITLE}
   </a>
   <nav aria-label="Main navigation">
-    <HeaderLink href="/">Home</HeaderLink>
-    <HeaderLink href="/blog/">Blog</HeaderLink>
+    <HeaderLink href="/blog/">Writing</HeaderLink>
+    <HeaderLink href="/#projects">Projects</HeaderLink>
     <HeaderLink href="/about/">About</HeaderLink>
+    <ThemeToggle />
   </nav>
 </header>
-
 <style>
-  header {
+  .site-header {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 0.5em 1em;
-    padding: 0.5em 1em;
-    background: white;
-    box-shadow: 0 2px 8px rgba(var(--black), 5%);
+    gap: 16px;
+    padding: 20px var(--pad);
   }
 
   .site-title {
-    color: rgb(var(--black));
-    font-weight: 700;
+    color: var(--ink);
+    font: 600 14px/1 var(--mono);
+    letter-spacing: 0.09em;
     text-decoration: none;
+    text-transform: uppercase;
+    white-space: nowrap;
   }
 
   nav {
     display: flex;
-    gap: 0.5em;
+    align-items: center;
+    gap: clamp(12px, 2.5vw, 28px);
+    font: 500 12px/1.4 var(--mono);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
   }
 
   nav :global(a) {
-    padding: 0.5em;
-    color: rgb(var(--black));
-    border-bottom: 3px solid transparent;
+    color: var(--mute);
+    padding: 5px 0;
     text-decoration: none;
   }
 
-  nav :global(a.active) {
-    border-bottom-color: var(--accent);
+  nav :global(a[aria-current='page']) {
+    box-shadow: inset 0 -2px var(--acc);
+    color: var(--ink);
+  }
+
+  @media (max-width: 560px) {
+    .site-header {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    nav {
+      width: 100%;
+      justify-content: space-between;
+    }
   }
 </style>

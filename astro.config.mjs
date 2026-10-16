@@ -9,6 +9,7 @@ export default defineConfig({
   site: 'https://kellen-miller.github.io',
   output: 'static',
   trailingSlash: 'always',
+  markdown: { syntaxHighlight: false },
   integrations: [
     mdx(),
     sitemap({ filter: (page) => !page.endsWith('/404.html') }),

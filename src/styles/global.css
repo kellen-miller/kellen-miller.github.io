@@ -156,7 +156,7 @@ svg text {
   gap: 12px;
   color: var(--mute);
   font:
-    500 11px/1.4 var(--mono),
+    500 12px/1.4 var(--mono),
     ui-monospace,
     monospace;
   letter-spacing: 0.08em;

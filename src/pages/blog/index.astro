@@ -1,12 +1,10 @@
 ---
-import { getCollection } from 'astro:content';
+import { getBlogPosts } from '../../data/blog';
 import WritingLog from '../../components/WritingLog.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
 
-const posts = (await getCollection('blog')).sort(
-  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
-);
+const posts = await getBlogPosts();
 ---
 
 <BaseLayout title={`Writing · ${SITE_TITLE}`} description={SITE_DESCRIPTION}>

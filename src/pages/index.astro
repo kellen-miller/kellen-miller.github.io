@@ -1,5 +1,5 @@
 ---
-import { getCollection } from 'astro:content';
+import { getBlogPosts } from '../data/blog';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ShopLog from '../components/ShopLog.astro';
 import GaragePlan from '../components/garage/GaragePlan.astro';
@@ -13,9 +13,7 @@ const activity = await fetchProjectsForBuild(
   new Date(),
 );
 const projects = activity.projects;
-const posts = (await getCollection('blog')).sort(
-  (left, right) => right.data.pubDate.getTime() - left.data.pubDate.getTime(),
-);
+const posts = await getBlogPosts();
 const totalCommits = projects.reduce(
   (sum, project) => sum + project.commits,
   0,

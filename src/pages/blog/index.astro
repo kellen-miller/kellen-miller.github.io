@@ -1,10 +1,7 @@
 ---
-import { Image } from 'astro:assets';
 import { getCollection } from 'astro:content';
-import BaseHead from '../../components/BaseHead.astro';
-import Footer from '../../components/Footer.astro';
-import FormattedDate from '../../components/FormattedDate.astro';
-import Header from '../../components/Header.astro';
+import WritingLog from '../../components/WritingLog.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
 
 const posts = (await getCollection('blog')).sort(
@@ -12,124 +9,31 @@ const posts = (await getCollection('blog')).sort(
 );
 ---
 
-<!doctype html>
-<html lang="en">
-  <head>
-    <BaseHead title={`Blog · ${SITE_TITLE}`} description={SITE_DESCRIPTION} />
-    <style>
-      main {
-        width: 960px;
-      }
+<BaseLayout title={`Writing · ${SITE_TITLE}`} description={SITE_DESCRIPTION}>
+  <header class="page-content writing-page-heading">
+    <p class="eyebrow">Notes from the garage</p>
+    <h1>Writing</h1>
+    <p class="page-dek">
+      Field notes and longer thoughts, when there are some to share.
+    </p>
+  </header>
+  <WritingLog posts={posts} />
+</BaseLayout>
 
-      ul {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 2rem;
-        list-style-type: none;
-        margin: 0;
-        padding: 0;
-      }
+<style>
+  .writing-page-heading {
+    width: 100%;
+    padding-bottom: 0;
+  }
 
-      ul li {
-        width: calc(50% - 1rem);
-      }
-
-      ul li * {
-        text-decoration: none;
-        transition: 0.2s ease;
-      }
-
-      ul li:first-child {
-        width: 100%;
-        margin-bottom: 1rem;
-        text-align: center;
-      }
-
-      ul li:first-child img {
-        width: 100%;
-      }
-
-      ul li:first-child .title {
-        font-size: 2.369rem;
-      }
-
-      ul li img {
-        margin-bottom: 0.5rem;
-        border-radius: 12px;
-      }
-
-      ul li a {
-        display: block;
-      }
-
-      .title {
-        margin: 0;
-        color: rgb(var(--black));
-        font-size: 1.563em;
-        line-height: 1.2;
-      }
-
-      .date {
-        margin: 0;
-        color: rgb(var(--gray));
-      }
-
-      ul li a:hover h2,
-      ul li a:hover .date {
-        color: rgb(var(--accent));
-      }
-
-      ul a:hover img {
-        box-shadow: var(--box-shadow);
-      }
-
-      @media (max-width: 720px) {
-        ul {
-          gap: 0.5em;
-        }
-
-        ul li {
-          width: 100%;
-          text-align: center;
-        }
-
-        ul li:first-child {
-          margin-bottom: 0;
-        }
-
-        ul li:first-child .title {
-          font-size: 1.563em;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <Header />
-    <main>
-      <h1>Blog</h1>
-      <section>
-        <ul>
-          {posts.map((post) => (
-            <li>
-              <a href={`/blog/${post.id}/`}>
-                {post.data.heroImage && (
-                  <Image
-                    width={720}
-                    height={360}
-                    src={post.data.heroImage}
-                    alt=""
-                  />
-                )}
-                <h2 class="title">{post.data.title}</h2>
-                <p class="date">
-                  <FormattedDate date={post.data.pubDate} />
-                </p>
-              </a>
-            </li>
-          ))}
-        </ul>
-      </section>
-    </main>
-    <Footer />
-  </body>
-</html>
+  .eyebrow {
+    margin: 0 0 14px;
+    color: var(--mute);
+    font:
+      500 11px/1.4 var(--mono),
+      ui-monospace,
+      monospace;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+</style>

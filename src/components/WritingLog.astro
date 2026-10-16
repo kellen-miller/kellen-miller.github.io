@@ -1,0 +1,123 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import FormattedDate from './FormattedDate.astro';
+
+interface Props {
+  posts: CollectionEntry<'blog'>[];
+}
+
+const { posts } = Astro.props;
+---
+
+<section class="writing-log" aria-labelledby="writing-heading">
+  <div class="section-label">
+    <h2 id="writing-heading">Writing</h2>
+    <span>
+      {String(posts.length).padStart(2, '0')}{' '}
+      {posts.length === 1 ? 'post' : 'posts'}
+    </span>
+  </div>
+  {posts.length ? (
+    <ol>
+      {posts.map((post) => (
+        <li>
+          <FormattedDate date={post.data.pubDate} />
+          <div class="entry">
+            <h3>
+              <a href={`/blog/${post.id}/`}>{post.data.title}</a>
+            </h3>
+            <p>{post.data.description}</p>
+          </div>
+          {post.data.tag && <span class="tag">{post.data.tag}</span>}
+        </li>
+      ))}
+    </ol>
+  ) : (
+    <p class="empty-state">No notes published yet. Check back soon.</p>
+  )}
+</section>
+
+<style>
+  .writing-log {
+    padding: var(--section-gap) var(--pad) 0;
+  }
+
+  .section-label {
+    margin-bottom: 8px;
+  }
+
+  ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  li {
+    display: grid;
+    grid-template-columns: 120px minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: 14px;
+    border-bottom: 1px dashed var(--line);
+    padding: 14px 0;
+    font: 12px/1.5 var(--mono);
+  }
+
+  li > :global(time),
+  .tag {
+    color: var(--mute);
+    font-size: 11px;
+    letter-spacing: 0.03em;
+  }
+
+  h3 {
+    margin: 0;
+    font: 500 17px/1.4 var(--mono);
+  }
+
+  h3 a {
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  h3 a:hover {
+    color: var(--acc-ink);
+  }
+
+  li p {
+    margin: 2px 0 0;
+    color: var(--mute);
+    font: 15px/1.45 var(--text);
+  }
+
+  .tag {
+    text-align: right;
+  }
+
+  .empty-state {
+    margin: 0;
+    padding: 18px 0;
+    color: var(--mute);
+    font-size: 16px;
+  }
+
+  @media (max-width: 560px) {
+    li {
+      grid-template-columns: 1fr auto;
+      gap: 4px 10px;
+    }
+
+    li > :global(time) {
+      grid-column: 1;
+    }
+
+    .entry {
+      grid-column: 1 / -1;
+      grid-row: 2;
+    }
+
+    .tag {
+      grid-column: 2;
+      grid-row: 1;
+    }
+  }
+</style>

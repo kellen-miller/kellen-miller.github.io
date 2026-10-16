@@ -1,24 +1,7 @@
----
-import { SITE_TITLE } from '../consts';
----
-
-<footer>
-  <p>
-    &copy; {new Date().getFullYear()} {SITE_TITLE}
-  </p>
-  <a href="https://github.com/kellen-miller">GitHub</a>
-  <a href="/rss.xml">RSS</a>
+<footer class="site-footer">
+  <span>© {new Date().getFullYear()} Kellen Miller</span>
+  <nav aria-label="Footer links">
+    <a href="https://github.com/kellen-miller">GitHub</a>
+    <a href="/rss.xml">RSS</a>
+  </nav>
 </footer>
-
-<style>
-  footer {
-    padding: 2em 1em 4em;
-    background: linear-gradient(var(--gray-gradient)) no-repeat;
-    color: rgb(var(--gray));
-    text-align: center;
-  }
-
-  footer a {
-    margin: 0 0.5em;
-  }
-</style>

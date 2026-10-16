@@ -8,7 +8,7 @@ export default defineConfig({
   workers: process.env.CI ? 2 : 4,
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
-    baseURL: 'http://127.0.0.1:4321',
+    baseURL: 'http://127.0.0.1:4323',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
@@ -20,8 +20,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run preview -- --ignore-lock --host 127.0.0.1 --port 4321',
-    url: 'http://127.0.0.1:4321',
+    command: 'npm run preview -- --ignore-lock --host 127.0.0.1 --port 4323',
+    url: 'http://127.0.0.1:4323',
     reuseExistingServer: false,
   },
 });

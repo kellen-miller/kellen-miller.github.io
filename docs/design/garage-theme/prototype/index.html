@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kellen Miller — Notes from the garage (prototype)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="base.css">
+<style>
+/* E · Paper Live — D3's interaction on D2's graph paper, plus working micrographics:
+   a readout panel that reports the hovered entry, figure captions and scale rulers on each drawing,
+   tick rules in section labels, and registration marks on the sheet. Light by default, dark on toggle. */
+:root { --acc-ink: var(--acc); --on-acc: #fff; --grid-dot: #1d1e21; --card-glow: #17181a; --card-on: #17181b; --panel: #121315; }
+:root[data-theme="light"] {
+  --bg: #eeede9; --bg2: #e4e3de; --ink: #151515; --mute: #55565a; --faint: #8b8c8f; --line: #d3d2cc;
+  --acc: #7a3cf0;
+  --il-line: #1b1b1b; --il-top: #fbfbf9; --il-left: #e2e1dc; --il-right: #cfcec8; --il-dark: #bdbcb6;
+  --grid-dot: #d3d2cc; --card-glow: #f8f7f4; --card-on: #e6e5df; --panel: #f6f5f1;
+  color-scheme: light;
+}
+body { background-image: radial-gradient(circle at 1px 1px, var(--grid-dot) 1px, transparent 1.3px); background-size: 22px 22px; }
+.theme { font: 13px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--mute); background: none; border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; cursor: pointer; }
+.theme:hover, .theme:focus-visible { color: var(--ink); border-color: var(--faint); outline: none; }
+
+/* readout: reports whatever entry is hovered */
+.readout { margin-top: 26px; border: 1px solid var(--line); background: var(--panel); font: 11px/1.5 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--faint); max-width: 440px; }
+.readout .hd { display: flex; justify-content: space-between; padding: 7px 12px; border-bottom: 1px dashed var(--line); }
+.readout .hd b { color: var(--ink); font-weight: 500; }
+.readout dl { margin: 0; display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: 3px 12px; padding: 10px 12px 12px; }
+.readout dt { color: var(--faint); }
+.readout dd { margin: 0; color: var(--ink); text-transform: none; letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.readout .meter { display: grid; grid-template-columns: minmax(0, 1fr) 44px; gap: 10px; align-items: center; }
+.readout .meter i { height: 6px; display: block; background: repeating-linear-gradient(90deg, var(--acc) 0 2px, transparent 2px 4px); transition: width .3s ease; }
+.readout .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--acc); margin-right: 6px; vertical-align: 0; }
+
+/* figure captions and rulers on each drawing */
+.sheet .fig { position: absolute; left: 12px; bottom: 9px; background: var(--bg); padding: 1px 5px; font: 10px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--faint); }
+.sheet .ruler { position: absolute; right: 16px; bottom: 14px; width: 84px; height: 8px; background: repeating-linear-gradient(90deg, var(--faint) 0 1px, transparent 1px 7px) bottom / 100% 4px no-repeat, repeating-linear-gradient(90deg, var(--faint) 0 1px, transparent 1px 42px) bottom / 100% 8px no-repeat; border-bottom: 1px solid var(--faint); }
+.sheet .reg { position: absolute; width: 9px; height: 9px; opacity: .6; }
+.sheet .reg::before, .sheet .reg::after { content: ""; position: absolute; background: var(--faint); }
+.sheet .reg::before { left: 4px; top: 0; width: 1px; height: 9px; } .sheet .reg::after { top: 4px; left: 0; width: 9px; height: 1px; }
+.sheet .draw { position: relative; }
+.sheet .reg.br { right: 10px; top: 50%; } .sheet .reg.bl { left: 10px; top: 50%; }
+
+/* tick rule between section label halves */
+.label { align-items: center; }
+.label .rule { flex: 1; height: 6px; margin: 0 14px; background: repeating-linear-gradient(90deg, var(--line) 0 1px, transparent 1px 8px) bottom / 100% 6px no-repeat; opacity: .9; }
+
+D3 · Live — hover a card and its object lights up in the garage (and the reverse).
+   Motion only runs on the hovered entry: the engine idles, the grinder sparks, the radio blinks. None for reduced-motion users. */
+.scene g[data-obj], .scene .call { transition: opacity .25s ease; }
+.scene.focus g[data-obj]:not(.on), .scene.focus .call:not(.on) { opacity: .18; }
+.scene .call { cursor: pointer; }
+.sheet { transition: background .2s ease; }
+.sheet.on { background: var(--card-on); }
+.sheet.on h3 { color: var(--acc-ink); }
+@media (prefers-reduced-motion: no-preference) {
+  .on .spark { animation: spark .5s steps(2, jump-none) infinite; }
+  .on .spark.s1 { animation-delay: .12s; } .on .spark.s2 { animation-delay: .25s; } .on .spark.s3 { animation-delay: .37s; }
+  .on .led { animation: led 1.4s steps(2, jump-none) infinite; }
+}
+@keyframes spark { 50% { opacity: 0; } }
+@keyframes led { 50% { opacity: .15; } }
+/* D · Combined
+   Layout + isometric cards from A, type and instrument styling from B,
+   race number plates from C (on the garage callouts and on every card). */
+.name { font: 600 14px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+.bar nav { font: 13px var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+.label { display: flex; justify-content: space-between; gap: 12px; }
+
+.hero { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(20px, 4vw, 56px); align-items: center; padding: clamp(24px, 5vw, 56px) var(--pad) 0; }
+.hero .k { font: 12px var(--mono); color: var(--faint); letter-spacing: .08em; text-transform: uppercase; display: flex; gap: 18px; flex-wrap: wrap; }
+.hero .k b { color: var(--ink); font-weight: 500; }
+.hero h1 { margin: 16px 0 18px; font: 500 clamp(30px, 4.2vw, 56px)/1.05 var(--mono); letter-spacing: -.04em; text-transform: uppercase; text-wrap: balance; }
+.hero h1 em { font-style: normal; color: var(--acc-ink); }
+.hero p { margin: 0; color: var(--mute); font-size: 17px; max-width: 46ch; }
+.hero svg, .garage svg { width: 100%; height: auto; display: block; }
+
+.plate { display: inline-grid; place-items: center; min-width: 46px; height: 32px; padding: 0 8px; border-radius: 6px; background: var(--ink); color: var(--bg); font: 800 17px/1 var(--mono); letter-spacing: -.02em; }
+.plate.hot { background: var(--acc); color: var(--on-acc); }
+
+.sheets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); }
+.sheet { position: relative; background: var(--bg); display: grid; grid-template-rows: auto 1fr; text-decoration: none; }
+.sheet .plate { position: absolute; top: 16px; left: 16px; }
+.sheet .obj { position: absolute; top: 22px; right: 18px; font: 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--faint); }
+.sheet svg { width: 100%; height: auto; display: block; background: radial-gradient(ellipse at 50% 60%, var(--card-glow), var(--bg) 70%); }
+.sheet .cap { padding: 14px 20px 20px; display: grid; gap: 6px; align-content: start; border-top: 1px dashed var(--line); }
+.sheet h3 { margin: 0; font: 600 17px var(--mono); letter-spacing: -.01em; }
+.sheet p { margin: 0; color: var(--mute); font-size: 15px; }
+.sheet .foot { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; margin-top: 6px; font: 11px var(--mono); color: var(--faint); letter-spacing: .04em; }
+.sheet .foot i { height: 6px; display: block; background: repeating-linear-gradient(90deg, var(--il-line) 0 2px, transparent 2px 4px); }
+.sheet.hot .foot i { background: repeating-linear-gradient(90deg, var(--acc) 0 2px, transparent 2px 4px); }
+.sheet:hover h3, .sheet:focus-visible h3 { color: var(--acc-ink); }
+.sheet:focus-visible { outline: 2px solid var(--acc); outline-offset: -2px; }
+
+.log { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.log li { display: grid; grid-template-columns: 120px minmax(0, 1fr) 90px; gap: 20px; padding: 16px 0; border-bottom: 1px dashed var(--line); align-items: baseline; }
+.log time, .log .tag { font: 12px var(--mono); color: var(--faint); letter-spacing: .04em; }
+.log .tag { text-align: right; }
+.log h3 { margin: 0 0 2px; font: 500 17px/1.3 var(--mono); letter-spacing: -.02em; }
+.log h3 a { text-decoration: none; }
+.log h3 a:hover { color: var(--acc-ink); }
+.log p { margin: 0; color: var(--mute); font-size: 15px; }
+
+@media (max-width: 900px) { .hero { grid-template-columns: minmax(0, 1fr); } .sheets { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .sheets { grid-template-columns: minmax(0, 1fr); } .log li { grid-template-columns: minmax(0, 1fr); gap: 2px; } .log .tag { text-align: left; } .hero svg .call { display: none; } }
+
+/* keyed notes as real text under the plan */
+.sheetwrap { display: grid; gap: 14px; min-width: 0; }
+.notes { border-top: 1px solid var(--ink); }
+.garage .notes-hd { max-width: none; display: flex; justify-content: space-between; gap: 12px; margin: 0; padding: 8px 0; font: 500 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink); border-bottom: 1px solid var(--line); }
+.garage .notes-hd span:last-child { color: var(--faint); }
+.notes ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 24px; }
+.notes li { display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 0 10px; align-items: center; padding: 9px 0; border-bottom: 1px dashed var(--line); cursor: pointer; transition: opacity .2s ease; }
+.notes li .plate { grid-row: 1 / span 2; min-width: 34px; height: 24px; font-size: 13px; border-radius: 5px; }
+.notes li b { font: 500 11px var(--mono); letter-spacing: .04em; text-transform: uppercase; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.notes li span.sub { font: 11px var(--mono); color: var(--faint); }
+.notes.focus li:not(.on) { opacity: .35; }
+@media (max-width: 560px) { .notes ol { grid-template-columns: minmax(0, 1fr); } }
+
+/* garage section: plan + keyed notes on the left, readout on the right */
+.garage-grid { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); gap: clamp(20px, 4vw, 56px); align-items: start; }
+.garage-grid aside { display: grid; gap: 16px; align-content: start; }
+.garage-grid .readout { margin-top: 0; max-width: none; }
+.garage-note { margin: 0; color: var(--mute); font-size: 15px; }
+@media (max-width: 900px) { .garage-grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* J2 · Shop log: one running log of notes (posts) and builds (real commits), newest first */
+.hero { align-items: start !important; }
+.hero h1 { font-size: clamp(36px, 5.4vw, 76px) !important; }
+.shop { border-top: 1px solid var(--ink); }
+.hero .shop-hd { max-width: none; display: flex; justify-content: space-between; gap: 12px; margin: 0; padding: 8px 0; font: 500 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink); border-bottom: 1px solid var(--line); }
+.hero .shop-hd span:last-child { color: var(--faint); }
+.shop ol { list-style: none; margin: 0; padding: 0; }
+.shop li { display: grid; grid-template-columns: 92px 44px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px dashed var(--line); font: 13px var(--mono); }
+.shop li time, .shop li .tag { color: var(--faint); font-size: 12px; }
+.shop li .plate { min-width: 34px; height: 22px; font-size: 12px; border-radius: 5px; }
+.shop li .kind { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--acc-ink); border: 1px solid var(--acc); border-radius: 5px; height: 22px; display: grid; place-items: center; }
+.shop li.note a { font-weight: 600; color: var(--ink); text-decoration: none; }
+.shop li.note a:hover { color: var(--acc-ink); }
+.shop li[data-call] { cursor: pointer; }
+.shop li.on span:nth-child(3) { color: var(--acc-ink); }
+@media (max-width: 560px) { .shop li { grid-template-columns: 44px minmax(0, 1fr); } .shop li time, .shop li .tag { display: none; } }
+</style>
+</head>
+<body>
+<div class="bar"><a class="name" href="#">Kellen Miller</a><nav aria-label="Main"><a href="#" aria-current="page">Writing</a><a href="#">Projects</a><a href="#">About</a><button class="theme" id="theme" type="button" aria-label="Switch to dark theme">Dark</button></nav></div>
+
+<div class="hero">
+  <div>
+    <div class="k"><span>Projects <b>06</b></span><span>Commits, last 12 mo <b>221+</b></span><span>Posts <b>04</b></span></div>
+    <h1>Notes from the <em>garage</em>.</h1>
+    <p>I'm Kellen. I build backend systems for a living. After hours I'm in the garage: control software for a rotary engine, wiring design, and the tools I wish existed. These are my notes.</p>
+  </div>
+  <div class="shop">
+    <p class="shop-hd"><span>Shop log</span><span>notes + builds · newest first</span></p>
+    <ol id="shoplog"></ol>
+  </div>
+</div>
+
+<section class="garage">
+  <p class="label"><span>The garage</span><i class="rule" aria-hidden="true"></i><span>Plan view · 1:50</span></p>
+  <div class="garage-grid">
+  <div class="sheetwrap">
+    <svg id="scene" class="scene" viewBox="28 18 604 460" role="img" aria-label="Floor plan of the garage with six side projects, each tagged with its number"></svg>
+    <div class="notes">
+      <p class="notes-hd"><span>Keyed notes</span><span>Garage — plan view · 1:50</span></p>
+      <ol id="notes"></ol>
+    </div>
+  </div>
+
+    <aside>
+    <div class="readout" aria-live="polite">
+      <div class="hd"><span><span class="dot"></span>Readout</span><b id="ro-id">—</b></div>
+      <dl>
+        <dt>Entry</dt><dd id="ro-name">Hover an entry</dd>
+        <dt>Object</dt><dd id="ro-obj">—</dd>
+        <dt>Spec</dt><dd id="ro-spec">—</dd>
+        <dt>Lang</dt><dd id="ro-lang">—</dd>
+        <dt>Commits/yr</dt><dd class="meter"><i id="ro-bar" style="width:0"></i><span id="ro-c">—</span></dd>
+      </dl>
+    </div>
+      <p class="garage-note">Six projects live here. Hover a note, a plate, or a card below to find it on the plan.</p>
+    </aside>
+  </div>
+</section>
+
+<section>
+  <p class="label"><span>Projects</span><i class="rule" aria-hidden="true"></i><span>06 entries</span></p>
+  <div class="sheets" id="sheets"></div>
+</section>
+
+<section>
+  <p class="label"><span>Writing</span><i class="rule" aria-hidden="true"></i><span>04 posts</span></p>
+  <ul class="log" id="posts"></ul>
+</section>
+
+<footer><span>© 2026 Kellen Miller</span><nav aria-label="Elsewhere"><a href="#">GitHub</a><a href="#">RSS</a></nav></footer>
+
+
+<script src="garage.js"></script>
+<script src="plan.js"></script>
+<script>
+  const hot = Math.max(...KM.projects.map(p => p.commits));
+  // one-line specs, taken from each repo's README
+  const spec = { celerity: "13B twin rotor · CAN", venae: "harness + fluid · no CAD", deburr: "Go + TS · no models", chief: "discord · voice · sqlite", sup: "yaml jobs · rich TUI", skills: "~/.agents/skills" };
+
+  // hero garage with number-plate callouts (from C), set in mono (from B)
+  const svg = document.getElementById("scene");
+  // I · G3's plan sheet with H2's keyed notes: plates sit on the objects, the legend explains them.
+  const P = KMPlan, art = KM.el("g", { class: "art" }, svg), s = 1.22, X = 112, Y = 104;
+  const pl = P.plan(art, X, Y, s);
+  P.dim(art, X, Y - 34, X + 380 * s, Y - 34, "7.60 M"); P.dim(art, X - 34, Y, X - 34, Y + 240 * s, "4.80 M", true);
+  [["A", 0], ["B", 190], ["C", 380]].forEach(([t, u]) => { const x = X + u * s; P.L(art, x, Y - 46, x, Y - 58, "var(--faint)", 1); P.bubble(art, x, Y - 68, t); });
+  [["1", 0], ["2", 120], ["3", 240]].forEach(([t, v]) => P.bubble(art, X - 66, Y + v * s, t));
+  P.north(art, X + 380 * s - 12, Y + 240 * s + 40);
+  const tagAt = { skills: [0, -20], venae: [-26, 0], deburr: [0, -30], sup: [30, 16], chief: [-36, -12], celerity: [-34, 26] };
+  KM.projects.forEach(p => { const [x, y] = pl.centers[p.id], [dx, dy] = tagAt[p.id]; P.tag(svg, p.id, p.n, p.commits === hot, x, y, x + dx, y + dy); });
+  [[16, 16], [984, 16], [16, 584], [984, 584]].forEach(([x, y]) => KM.el("path", { d: `M${x - 7},${y}h14M${x},${y - 7}v14`, style: "stroke:var(--faint);stroke-width:1" }, svg));
+
+  const notes = document.getElementById("notes");
+  notes.innerHTML = KM.projects.map(p => `<li data-call="${p.id}"><span class="plate${p.commits === hot ? " hot" : ""}">${p.n}</span><b>${p.object}</b><span class="sub">${p.name} · ${p.lang.toLowerCase()}</span></li>`).join("");
+
+  // shop log: notes and builds interleaved, newest first
+  const shoplog = document.getElementById("shoplog");
+  if (shoplog) {
+    const rows = [
+      ...KM.posts.map(p => ({ date: p.iso, kind: "note", title: p.title, tag: p.tag })),
+      ...KM.builds.map(b => { const p = KM.projects.find(x => x.id === b.id); return { date: b.date, kind: "build", id: b.id, n: p.n, hot: p.commits === hot, title: b.msg, tag: p.name }; })
+    ].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8);
+    shoplog.innerHTML = rows.map(r => r.kind === "note"
+      ? `<li class="note"><time>${r.date.replaceAll("-", ".")}</time><span class="kind">Note</span><a href="#">${r.title}</a><span class="tag">${r.tag}</span></li>`
+      : `<li data-call="${r.id}"><time>${r.date.replaceAll("-", ".")}</time><span class="plate${r.hot ? " hot" : ""}">${r.n}</span><span>${r.title}</span><span class="tag">${r.tag}</span></li>`).join("");
+  }
+  // job sheet: work performed = latest builds
+  const work = document.getElementById("work");
+  if (work) work.innerHTML = KM.builds.slice(0, 5).map(b => { const p = KM.projects.find(x => x.id === b.id); return `<li data-call="${b.id}"><span class="box" aria-hidden="true">✓</span><span class="plate${p.commits === hot ? " hot" : ""}">${p.n}</span><span>${b.msg}</span><time>${b.date.slice(5).replace("-", "/")}</time></li>`; }).join("");
+
+  // isometric cards (from A) with plates and commit meters
+  const scale = { celerity: 1.4, venae: 1.15, deburr: 1.75, chief: 2.1, sup: 1.8, skills: 1.2 };
+  const sheets = document.getElementById("sheets");
+  KM.projects.forEach(p => {
+    const a = document.createElement("a"), isHot = p.commits === hot;
+    a.className = "sheet" + (isHot ? " hot" : ""); a.dataset.id = p.id; a.href = "https://github.com/kellen-miller/" + p.name;
+    a.innerHTML = `<div class="draw"><svg viewBox="0 0 400 260" aria-hidden="true"></svg><span class="fig">Fig. ${p.n} — ${spec[p.id]}</span><span class="ruler" aria-hidden="true"></span><span class="reg bl" aria-hidden="true"></span><span class="reg br" aria-hidden="true"></span></div><span class="plate${isHot ? " hot" : ""}">${p.n}</span><span class="obj">${p.object}</span>
+      <div class="cap"><h3>${p.name}</h3><p>${p.desc}</p><div class="foot"><span>${p.lang}</span><i style="width:${Math.max(6, p.commits)}%"></i><span>${p.commits === 100 ? "100+" : p.commits} commits</span></div></div>`;
+    sheets.appendChild(a);
+    KM.vignette(a.querySelector("svg"), p.id, scale[p.id]);
+  });
+
+  // linking: card ↔ object ↔ callout
+  const focus = id => {
+    svg.classList.toggle("focus", !!id);
+    notes.parentElement.classList.toggle("focus", !!id);
+    document.querySelectorAll(".garage [data-obj], .garage [data-call], .hero [data-call]").forEach(n => n.classList.toggle("on", !!id && (n.dataset.obj === id || n.dataset.call === id)));
+    sheets.querySelectorAll(".sheet").forEach(s => s.classList.toggle("on", s.dataset.id === id));
+    const p = KM.projects.find(x => x.id === id), set = (k, v) => document.getElementById("ro-" + k).textContent = v;
+    set("id", p ? "#" + p.n : "—"); set("name", p ? p.name : "Hover an entry"); set("obj", p ? p.object : "—");
+    set("spec", p ? spec[p.id] : "—"); set("lang", p ? p.lang : "—"); set("c", p ? (p.commits === 100 ? "100+" : p.commits) : "—");
+    document.getElementById("ro-bar").style.width = p ? Math.max(6, p.commits) + "%" : "0";
+    spin(id === "celerity");
+  };
+  sheets.querySelectorAll(".sheet").forEach(s => {
+    ["mouseenter", "focus"].forEach(e => s.addEventListener(e, () => focus(s.dataset.id)));
+    ["mouseleave", "blur"].forEach(e => s.addEventListener(e, () => focus(null)));
+  });
+  document.querySelectorAll(".garage [data-call], .hero [data-call]").forEach(c => {
+    c.addEventListener("mouseenter", () => focus(c.dataset.call));
+    c.addEventListener("mouseleave", () => focus(null));
+    c.addEventListener("click", () => sheets.querySelector(`[data-id="${c.dataset.call}"]`).scrollIntoView({ behavior: "smooth", block: "center" }));
+  });
+
+  // the rotor turns only while its entry is hovered (SMIL ignores CSS media queries, so check reduced motion here)
+  const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const rotors = still ? [] : [...document.querySelectorAll(".rotor")].map(r => KM.el("animateTransform", { attributeName: "transform", type: "rotate", from: "0 " + (r.dataset.c || "26 28.7"), to: "120 " + (r.dataset.c || "26 28.7"), dur: "1.6s", begin: "indefinite", repeatCount: "indefinite" }, r));
+  const spin = on => rotors.forEach(a => on ? a.beginElement() : a.endElement());
+
+  // theme toggle (light paper by default)
+  const tbtn = document.getElementById("theme");
+  const setTheme = t => { document.documentElement.dataset.theme = t; tbtn.textContent = t === "light" ? "Dark" : "Light"; tbtn.setAttribute("aria-label", `Switch to ${t === "light" ? "dark" : "light"} theme`); try { localStorage.setItem("km-theme", t); } catch (e) {} };
+  try { const saved = localStorage.getItem("km-theme"); if (saved) setTheme(saved); } catch (e) {}
+  tbtn.addEventListener("click", () => setTheme(document.documentElement.dataset.theme === "light" ? "dark" : "light"));
+
+  // writing as a log (from B)
+  document.getElementById("posts").innerHTML = KM.posts.map(p => `<li><time datetime="${p.iso}">${p.iso.replaceAll("-", ".")}</time><div><h3><a href="#">${p.title}</a></h3><p>${p.desc}</p></div><span class="tag">${p.tag}</span></li>`).join("");
+</script>
+</body>
+</html>

@@ -4,3 +4,6 @@ dist/
 playwright-report/
 test-results/
 package-lock.json
+.agent/
+.worktrees/
+docs/design/garage-theme/prototype/

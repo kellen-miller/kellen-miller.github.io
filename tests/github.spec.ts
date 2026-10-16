@@ -79,6 +79,40 @@ function paginatedResponse(url: URL): Response {
   return jsonResponse([]);
 }
 
+function canonicalPaginationFetch(requests: URL[]): typeof fetch {
+  return async (input) => {
+    const url = new URL(input.toString());
+    requests.push(url);
+
+    if (
+      url.searchParams.has('author') &&
+      (url.pathname === '/repos/kellen-miller/celerity/commits' ||
+        url.pathname === '/repositories/123456789/commits')
+    ) {
+      if (url.searchParams.has('page')) {
+        return jsonResponse(
+          Array.from({ length: 3 }, (_, index) =>
+            commit(String(index + 101), 'fix: work'),
+          ),
+        );
+      }
+
+      const nextUrl = new URL(url);
+      nextUrl.pathname = '/repositories/123456789/commits';
+      nextUrl.searchParams.set('page', '2');
+
+      return jsonResponse(
+        Array.from({ length: 100 }, (_, index) =>
+          commit(String(index + 1), 'fix: work'),
+        ),
+        `<${nextUrl.href}>; rel="next"`,
+      );
+    }
+
+    return jsonResponse([]);
+  };
+}
+
 function failureResponse(kind: string): Response {
   if (kind === 'HTTP') {
     return new Response('rate limited', { status: 429 });
@@ -182,6 +216,29 @@ test('counts all pages and scans past merge and maintenance commits for a build'
   expect(requests.every((url) => url.origin === 'https://api.github.com')).toBe(
     true,
   );
+});
+
+test('follows canonical repository pagination with count filters preserved', async () => {
+  const requests: URL[] = [];
+  globalThis.fetch = canonicalPaginationFetch(requests);
+
+  const result = await fetchProjectsForBuild('live', now);
+  const celerity = result.projects.find((project) => project.id === 'celerity');
+  const canonicalPage = requests.find(
+    (url) => url.pathname === '/repositories/123456789/commits',
+  );
+
+  expect(result.source).toBe('github');
+  expect(celerity?.commits).toBe(103);
+  expect(canonicalPage?.searchParams.get('author')).toBe('kellen-miller');
+  expect(canonicalPage?.searchParams.get('since')).toBe(
+    '2025-10-15T12:00:00.000Z',
+  );
+  expect(canonicalPage?.searchParams.get('until')).toBe(
+    '2026-10-15T12:00:00.000Z',
+  );
+  expect(canonicalPage?.searchParams.get('per_page')).toBe('100');
+  expect(canonicalPage?.searchParams.get('page')).toBe('2');
 });
 
 test('preserves a valid zero count and no qualifying build', async () => {

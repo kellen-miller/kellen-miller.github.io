@@ -1,0 +1,59 @@
+{
+  "asOf": "2026-10-16T01:03:39.611Z",
+  "projects": {
+    "celerity": {
+      "commits": 14,
+      "build": {
+        "sha": "4ffc2baabbb4cb63acc6eed0403bd25b0b7b8985",
+        "date": "2026-10-08T17:43:06Z",
+        "subject": "Update rust crate socketcan to v4 (#35)",
+        "url": "https://github.com/kellen-miller/celerity/commit/4ffc2baabbb4cb63acc6eed0403bd25b0b7b8985"
+      }
+    },
+    "venae-machinae": {
+      "commits": 16,
+      "build": {
+        "sha": "15a687d007b84ab2141b637b23709fcba62ee78a",
+        "date": "2026-10-08T16:28:21Z",
+        "subject": "Update all non-major dependencies (#26)",
+        "url": "https://github.com/kellen-miller/venae-machinae/commit/15a687d007b84ab2141b637b23709fcba62ee78a"
+      }
+    },
+    "deburr": {
+      "commits": 12,
+      "build": {
+        "sha": "4f75e2d4ca694b9b3c6519814bd42caf8c91bdc8",
+        "date": "2026-10-05T21:13:54Z",
+        "subject": "Show audit progress and test TypeScript",
+        "url": "https://github.com/kellen-miller/deburr/commit/4f75e2d4ca694b9b3c6519814bd42caf8c91bdc8"
+      }
+    },
+    "chief": {
+      "commits": 119,
+      "build": {
+        "sha": "05de822ca8d26009d6f589f7235c5ee7564d57e9",
+        "date": "2026-10-09T14:11:43Z",
+        "subject": "Update dependency openai to v7 (#51)",
+        "url": "https://github.com/kellen-miller/chief/commit/05de822ca8d26009d6f589f7235c5ee7564d57e9"
+      }
+    },
+    "sup": {
+      "commits": 34,
+      "build": {
+        "sha": "c6586f3f7545ea4180e4a04a8f57b0c40d115bc8",
+        "date": "2026-10-09T12:04:16Z",
+        "subject": "Clear stale GOROOT for gup updates (#16)",
+        "url": "https://github.com/kellen-miller/sup/commit/c6586f3f7545ea4180e4a04a8f57b0c40d115bc8"
+      }
+    },
+    "skills": {
+      "commits": 53,
+      "build": {
+        "sha": "e7fe90c521705854c514336ace6bb69898e188aa",
+        "date": "2026-10-15T23:29:15Z",
+        "subject": "Reduce skill router context (#28)",
+        "url": "https://github.com/kellen-miller/skills/commit/e7fe90c521705854c514336ace6bb69898e188aa"
+      }
+    }
+  }
+}

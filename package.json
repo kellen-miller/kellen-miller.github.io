@@ -15,9 +15,10 @@
     "build": "astro build",
     "preview": "astro preview",
     "test": "playwright test",
-    "test:ci": "npm run build && npm test",
+    "test:ci": "npm run build:test && npm test",
     "test:ui": "playwright test --ui",
-    "validate": "npm run format:check && npm run lint && npm run check && npm run build && npm test",
+    "validate": "npm run format:check && npm run lint && npm run check && npm run build:test && npm test",
+    "build:test": "GITHUB_DATA_MODE=snapshot astro build",
     "astro": "astro"
   },
   "dependencies": {

@@ -142,7 +142,10 @@ function failureResponse(kind: string): Response {
   throw Object.assign(new Error('request timed out'), { name: 'AbortError' });
 }
 
-function abortingSiblingFetch(waitingRepos: Set<string>): typeof fetch {
+function abortingSiblingFetch(
+  waitingRepos: Set<string>,
+  abortedRepos: Set<string>,
+): typeof fetch {
   return async (input, init) => {
     const url = new URL(input.toString());
     const repo = url.pathname.split('/').at(-2) ?? '';
@@ -156,8 +159,10 @@ function abortingSiblingFetch(waitingRepos: Set<string>): typeof fetch {
     return new Promise<Response>((_, reject) => {
       init?.signal?.addEventListener(
         'abort',
-        () =>
-          reject(Object.assign(new Error('aborted'), { name: 'AbortError' })),
+        () => {
+          abortedRepos.add(repo);
+          reject(Object.assign(new Error('aborted'), { name: 'AbortError' }));
+        },
         { once: true },
       );
     });
@@ -272,12 +277,52 @@ test.describe('live failure fallback', () => {
 
   test('aborts active sibling requests when one repository fails', async () => {
     const waitingRepos = new Set<string>();
-    globalThis.fetch = abortingSiblingFetch(waitingRepos);
+    const abortedRepos = new Set<string>();
+    globalThis.fetch = abortingSiblingFetch(waitingRepos, abortedRepos);
 
     const result = await fetchProjectsForBuild('live', now);
 
     expect(waitingRepos.size).toBeGreaterThan(0);
+    expect(abortedRepos).toEqual(waitingRepos);
     expect(result.source).toBe('snapshot');
     expect(result.projects).toHaveLength(6);
+  });
+
+  test('warns with safe HTTP and validation failure reasons', async () => {
+    const warnings: string[] = [];
+    const originalWarn = console.warn;
+    console.warn = (message: string) => warnings.push(message);
+
+    try {
+      for (const kind of ['HTTP', 'malformed']) {
+        globalThis.fetch = async () => failureResponse(kind);
+        await fetchProjectsForBuild('live', now);
+      }
+
+      expect(warnings).toEqual([
+        'GitHub project activity unavailable (GitHub returned HTTP 429); using saved snapshot.',
+        'GitHub project activity unavailable (Malformed GitHub commit response); using saved snapshot.',
+      ]);
+    } finally {
+      console.warn = originalWarn;
+    }
+  });
+
+  test('does not log arbitrary request error details', async () => {
+    const warnings: string[] = [];
+    const originalWarn = console.warn;
+    console.warn = (message: string) => warnings.push(message);
+    globalThis.fetch = async () => {
+      throw new Error('request failed with secret token must-not-be-logged');
+    };
+
+    try {
+      await fetchProjectsForBuild('live', now);
+      expect(warnings).toEqual([
+        'GitHub project activity unavailable (Error); using saved snapshot.',
+      ]);
+    } finally {
+      console.warn = originalWarn;
+    }
   });
 });

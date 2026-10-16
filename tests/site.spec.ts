@@ -144,6 +144,41 @@ test('shop log, plan, keyed notes, and cards share project focus', async ({
   await expect(page.locator('#readout-id')).toHaveText('#06');
 });
 
+for (const reducedMotion of ['no-preference', 'reduce'] as const) {
+  for (const sourceSelector of ['.note-link', '.scene .callout']) {
+    test(`project activation wins over stationary hover: ${sourceSelector}, ${reducedMotion}`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 1440, height: 1000 });
+      await page.emulateMedia({ reducedMotion });
+      await page.goto('/');
+      await page
+        .locator(`${sourceSelector}[data-project-id="celerity"]`)
+        .click();
+      const card = page.locator('#project-celerity');
+      await expect(card).toBeFocused();
+      await expect
+        .poll(() =>
+          card.evaluate((element) =>
+            Math.abs(element.getBoundingClientRect().top),
+          ),
+        )
+        .toBeLessThan(1);
+      await expect(page.locator('#readout-id')).toHaveText('#01');
+      await expect(page.locator('.project-card.on')).toHaveAttribute(
+        'id',
+        'project-celerity',
+      );
+
+      await page.locator('#project-chief').hover();
+      await expect(page.locator('#readout-id')).toHaveText('#04');
+      await expect(card).toBeFocused();
+      await page.mouse.move(0, 0);
+      await expect(page.locator('#readout-id')).toHaveText('#01');
+    });
+  }
+}
+
 test('celerity rotor keeps running when its focused card is hovered', async ({
   page,
 }) => {

@@ -316,12 +316,7 @@ function harnessBoard() {
   );
 }
 
-function engine(
-  scale: number,
-  originX: number,
-  originY: number,
-  suffix: string,
-) {
+function engine(scale: number, originX: number, originY: number) {
   const I = iso(scale, originX, originY);
   const cable = element(
     'g',
@@ -383,7 +378,7 @@ function engine(
         dur: '1.6s',
         begin: 'indefinite',
         repeatCount: 'indefinite',
-        class: `rotor-animation ${suffix}`,
+        class: 'rotor-animation',
       }),
   );
   const chamber = I.face(178, 207, 84, rotor);
@@ -397,7 +392,7 @@ function engine(
   );
 }
 
-export function projectDrawing(id: ProjectId, uniqueId: string) {
+export function projectDrawing(id: ProjectId) {
   const scales: Record<ProjectId, number> = {
     celerity: 1.4,
     'venae-machinae': 1.15,
@@ -426,7 +421,7 @@ export function projectDrawing(id: ProjectId, uniqueId: string) {
         top: 'var(--il-floor, var(--il-left))',
         left: right,
         right: dark,
-      }) + engine(k, ox, oy, uniqueId);
+      }) + engine(k, ox, oy);
   } else if (id === 'venae-machinae') {
     art =
       polygon(

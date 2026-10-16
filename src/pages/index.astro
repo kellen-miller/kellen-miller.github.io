@@ -161,8 +161,11 @@ const hotId =
   const updateFocus = () => renderFocus(pointerProject ?? keyboardProject);
 
   for (const source of focusSources) {
-    source.addEventListener('pointerenter', (event) => {
-      if (event.pointerType !== 'touch') {
+    source.addEventListener('pointermove', (event) => {
+      if (
+        event.pointerType !== 'touch' &&
+        pointerProject !== source.dataset.projectId
+      ) {
         pointerProject = source.dataset.projectId ?? null;
         updateFocus();
       }
@@ -177,6 +180,7 @@ const hotId =
       }
     });
     source.addEventListener('focus', () => {
+      pointerProject = null;
       keyboardProject = source.dataset.projectId ?? null;
       updateFocus();
     });

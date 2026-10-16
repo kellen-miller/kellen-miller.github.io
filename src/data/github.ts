@@ -26,6 +26,8 @@ const apiVersion = '2022-11-28';
 const requestTimeoutMs = 20_000;
 const snapshot = savedSnapshot as ActivitySnapshot;
 
+class GitHubResponseError extends Error {}
+
 function fromSnapshot(): ProjectActivity {
   return {
     projects: projects.map((project) => ({
@@ -52,7 +54,7 @@ function nextPage(
   const match = nextLink.match(/<([^>]+)>/);
 
   if (!match) {
-    throw new Error('Malformed GitHub pagination link');
+    throw new GitHubResponseError('Malformed GitHub pagination link');
   }
 
   const url = new URL(match[1]);
@@ -64,7 +66,7 @@ function nextPage(
     canonicalRepositoryPath.test(url.pathname);
 
   if (url.origin !== apiRoot || (!sameListing && !canonicalFirstPage)) {
-    throw new Error('Unexpected GitHub pagination endpoint');
+    throw new GitHubResponseError('Unexpected GitHub pagination endpoint');
   }
 
   return url;
@@ -90,7 +92,7 @@ async function fetchCommitPage(
   });
 
   if (!response.ok) {
-    throw new Error(`GitHub returned HTTP ${response.status}`);
+    throw new GitHubResponseError(`GitHub returned HTTP ${response.status}`);
   }
 
   const body: unknown = await response.json();
@@ -113,7 +115,7 @@ async function fetchCommitPage(
         typeof commit.commit.author.date !== 'string',
     )
   ) {
-    throw new Error('Malformed GitHub commit response');
+    throw new GitHubResponseError('Malformed GitHub commit response');
   }
 
   for (const commit of body as GitHubCommit[]) {
@@ -124,7 +126,7 @@ async function fetchCommitPage(
       commitUrl.origin !== 'https://github.com' ||
       commitUrl.pathname !== `/kellen-miller/${repo}/commit/${commit.sha}`
     ) {
-      throw new Error('Malformed GitHub commit response');
+      throw new GitHubResponseError('Malformed GitHub commit response');
     }
   }
 
@@ -241,7 +243,12 @@ export async function fetchProjectsForBuild(
     };
   } catch (error) {
     controller.abort();
-    const reason = error instanceof Error ? error.name : 'Unknown error';
+    const reason =
+      error instanceof GitHubResponseError
+        ? error.message
+        : error instanceof Error
+          ? error.name
+          : 'Unknown error';
     console.warn(
       `GitHub project activity unavailable (${reason}); using saved snapshot.`,
     );

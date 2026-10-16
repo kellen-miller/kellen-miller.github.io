@@ -11,14 +11,13 @@ interface Props {
 const { project, hotId, maxCommits } = Astro.props;
 const isHot = hotId === project.id;
 const meter = maxCommits > 0 ? (project.commits / maxCommits) * 100 : 0;
-const drawing = projectDrawing(project.id, project.id.replaceAll('-', '_'));
+const drawing = projectDrawing(project.id);
 ---
 
 <a
   class:list={['project-card', { hot: isHot }]}
   id={`project-${project.id}`}
   href={project.url}
-  data-id={project.id}
   data-call={project.id}
   data-project-focus
   data-project-id={project.id}

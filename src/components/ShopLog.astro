@@ -65,12 +65,7 @@ const entries = [
               data-project-commits={entry.project.commits}
             >
               <FormattedDate date={new Date(entry.project.build!.date)} />
-              <span
-                class="plate"
-                aria-label={`Project ${entry.project.number}`}
-              >
-                {entry.project.number}
-              </span>
+              <span class="plate">{entry.project.number}</span>
               <span class="title">{entry.project.build!.subject}</span>
               <span class="tag">{entry.project.repo}</span>
             </a>

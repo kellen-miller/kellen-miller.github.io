@@ -47,10 +47,7 @@ const drawing = projectDrawing(project.id, project.id.replaceAll('-', '_'));
     <p>{project.description}</p>
     <div class="foot">
       <span>{project.lang}</span>
-      <i
-        class="commit-meter"
-        aria-label={`${project.commits} commits in the last year`}
-      >
+      <i class="commit-meter">
         <span style={`width: ${meter}%`}></span>
       </i>
       <span>{project.commits} commits</span>
@@ -262,11 +259,19 @@ const drawing = projectDrawing(project.id, project.id.replaceAll('-', '_'));
   .foot i span {
     display: block;
     height: 100%;
-    background: var(--ink);
+    background: repeating-linear-gradient(
+      90deg,
+      var(--il-line) 0 2px,
+      transparent 2px 4px
+    );
   }
 
   .project-card.hot .foot i span {
-    background: var(--acc);
+    background-image: repeating-linear-gradient(
+      90deg,
+      var(--acc) 0 2px,
+      transparent 2px 4px
+    );
   }
 
   .project-card:focus-visible {

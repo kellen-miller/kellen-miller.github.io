@@ -144,6 +144,55 @@ test('shop log, plan, keyed notes, and cards share project focus', async ({
   await expect(page.locator('#readout-id')).toHaveText('#06');
 });
 
+test('celerity rotor keeps running when its focused card is hovered', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.goto('/');
+  await page.locator('#keyed-notes [data-call="celerity"]').focus();
+
+  const rotor = page.locator('.rotor-animation').first();
+  await expect
+    .poll(() =>
+      rotor.evaluate((element) =>
+        (element as SVGAnimateTransformElement).getStartTime(),
+      ),
+    )
+    .not.toBeNull();
+  const startTime = await rotor.evaluate((element) =>
+    (element as SVGAnimateTransformElement).getStartTime(),
+  );
+
+  await page.locator('.project-card[data-project-id="celerity"]').hover();
+  await page.mouse.move(0, 0);
+
+  expect(
+    await rotor.evaluate((element) =>
+      (element as SVGAnimateTransformElement).getStartTime(),
+    ),
+  ).toBe(startTime);
+});
+
+test('project commit meters use dotted fills for default and hot cards', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const meter = page.locator(
+    '.project-card[data-project-id="celerity"] .commit-meter span',
+  );
+  const idleBackground = await meter.evaluate(
+    (element) => getComputedStyle(element).backgroundImage,
+  );
+  expect(idleBackground).toContain('repeating-linear-gradient');
+
+  const hotMeter = page.locator('.project-card.hot .commit-meter span');
+  const hotBackground = await hotMeter.evaluate(
+    (element) => getComputedStyle(element).backgroundImage,
+  );
+  expect(hotBackground).toContain('repeating-linear-gradient');
+  expect(hotBackground).not.toBe(idleBackground);
+});
+
 test('focus follows reduced-motion preference changes', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');

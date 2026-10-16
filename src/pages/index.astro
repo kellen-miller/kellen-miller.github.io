@@ -102,6 +102,7 @@ const hotId =
   let activeProject: string | null = null;
 
   const renderFocus = (id: string | null) => {
+    const previousProject = activeProject;
     activeProject = id;
     const focused = focusSources.find(
       (source) => source.dataset.projectId === id,
@@ -120,9 +121,6 @@ const hotId =
       : null;
 
     document.querySelector('.scene')?.classList.toggle('focus', Boolean(id));
-    document
-      .querySelector('#keyed-notes')
-      ?.classList.toggle('focus', Boolean(id));
     for (const element of [...callouts, ...objects]) {
       element.classList.toggle(
         'on',
@@ -151,10 +149,12 @@ const hotId =
           ? `${(commitCount / maxCommits) * 100}%`
           : '0%';
 
-    for (const animation of rotorAnimations) {
-      if (id === 'celerity' && !motionPreference.matches)
-        animation.beginElement();
-      else animation.endElement();
+    if (previousProject !== id) {
+      for (const animation of rotorAnimations) {
+        if (id === 'celerity' && !motionPreference.matches)
+          animation.beginElement();
+        else if (previousProject === 'celerity') animation.endElement();
+      }
     }
   };
 
@@ -292,10 +292,6 @@ const hotId =
     border: 0;
   }
 
-  .project-grid :global(.project-card.on) {
-    background: var(--card-on);
-  }
-
   @media (prefers-reduced-motion: no-preference) {
     .homepage :global(.scene .on .spark),
     .project-grid :global(.project-card.on .spark) {
@@ -352,14 +348,6 @@ const hotId =
 
     .hero {
       gap: 28px;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .scene-shell :global([data-obj]),
-    .scene-shell :global(.callout),
-    .project-card {
-      transition: none;
     }
   }
 </style>

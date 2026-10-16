@@ -1,12 +1,17 @@
 import { defineCollection } from 'astro:content';
 import { glob } from 'astro/loaders';
 import { z } from 'astro/zod';
+import { blogSource, hasBlogPosts } from './data/blog-source';
 
 const blog = defineCollection({
-  loader: glob({
-    base: './src/content/blog',
-    pattern: ['**/*.md', '**/*.mdx', '!README.md'],
-  }),
+  // Keep the glob watcher active so the first post appears during development.
+  loader:
+    import.meta.env.DEV || hasBlogPosts()
+      ? glob({
+          base: blogSource.base,
+          pattern: [blogSource.pattern, '!README.md'],
+        })
+      : () => [],
   schema: ({ image }) =>
     z.object({
       title: z.string(),

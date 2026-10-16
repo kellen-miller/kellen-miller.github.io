@@ -20,7 +20,7 @@ jobs:
       format-script: format:check
 
   build-and-test:
-    uses: kellen-miller/ci/.github/workflows/node-test.yaml@f4096214828c04a170d62e79f7b3eab035364522
+    uses: kellen-miller/ci/.github/workflows/node-test.yaml@810d3a150a7780934f8f77cba1e545bcf3695728
     with:
       test-script: test:ci
       install-playwright: true

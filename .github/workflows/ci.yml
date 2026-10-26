@@ -36,7 +36,8 @@ jobs:
               ]
             }
   workflow-lint:
-    uses: kellen-miller/ci/.github/workflows/gh-actions-lint.yaml@75c70f9d5db7117810669e0af01fd2eafdc396c6
+    name: GitHub Actions
+    uses: kellen-miller/ci/.github/workflows/gh-actions-lint.yaml@eb1a4f5900aaa6468cffb67513da61078265ba26
   lint:
     uses: kellen-miller/ci/.github/workflows/node-lint.yaml@f4096214828c04a170d62e79f7b3eab035364522
     with:
@@ -53,3 +54,14 @@ jobs:
         test-results/
     needs: changes
     if: ${{ !cancelled() && (needs.changes.result != 'success' || fromJSON(needs.changes.outputs.changes).site) }}
+
+  duplication:
+    name: Code duplication (CPD)
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: kellen-miller/ci/.github/actions/code-duplication@eb1a4f5900aaa6468cffb67513da61078265ba26

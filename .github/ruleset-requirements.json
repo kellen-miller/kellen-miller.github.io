@@ -1,0 +1,8 @@
+{
+  "checks": [
+    "build-and-test / Node Test",
+    "lint / lint",
+    "GitHub Actions / Workflow validation",
+    "Code duplication (CPD)"
+  ]
+}

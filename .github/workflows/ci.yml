@@ -49,6 +49,7 @@ jobs:
       install-playwright: true
       playwright-browsers: chromium
       artifact-name: playwright-report
+      artifact-retention-days: 7
       artifact-path: |
         playwright-report/
         test-results/

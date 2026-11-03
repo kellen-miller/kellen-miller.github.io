@@ -50,3 +50,7 @@ npm run validate
 ## GitHub Pages
 
 The site URL is `https://kellen-miller.github.io`, configured in `astro.config.mjs`. Pull requests run validation; deployments run on pushes to `main` or manual runs on `main` through the shared workflows in `.github/workflows/`.
+
+TypeScript 7 provides `tsc` through `@typescript/native`. Framework checks and
+ESLint use the TypeScript 6 API compatibility package, aliased as `typescript`,
+following [Microsoft’s side-by-side guidance](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/#running-side-by-side-with-typescript-60).

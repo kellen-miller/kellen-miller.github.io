@@ -28,7 +28,7 @@ concurrency:
 
 jobs:
   deploy-site:
-    name: GitHub Pages
+    name: github-pages environment
     if: github.ref == 'refs/heads/main'
     uses: kellen-miller/ci/.github/workflows/deploy-github-pages.yaml@c188397b9147dbf21030cf2f3e4fc41bff37358b
     with:

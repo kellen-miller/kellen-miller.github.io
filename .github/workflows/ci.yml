@@ -1,13 +1,14 @@
-name: CI
+name: Site
 'on':
   pull_request: null
 permissions:
   contents: read
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: CI-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  changes:
+  site-paths:
+    name: Changed paths
     runs-on: ubuntu-latest
     outputs:
       changes: ${{ steps.paths.outputs.changes }}
@@ -35,16 +36,17 @@ jobs:
                 ".github/workflows/**"
               ]
             }
-  workflow-lint:
-    name: GitHub Actions
-    uses: kellen-miller/ci/.github/workflows/gh-actions-lint.yaml@eb1a4f5900aaa6468cffb67513da61078265ba26
-  lint:
-    uses: kellen-miller/ci/.github/workflows/node-lint.yaml@f4096214828c04a170d62e79f7b3eab035364522
+  static-analysis:
+    name: Node.js
+    uses: kellen-miller/ci/.github/workflows/node-lint.yaml@c188397b9147dbf21030cf2f3e4fc41bff37358b
     with:
+      check-name: Formatting, type and static analysis
       format-script: format:check
-  build-and-test:
-    uses: kellen-miller/ci/.github/workflows/node-test.yaml@d107bb649679d9eb225160cd4fcb8f3244a0f0ef
+  browser-tests:
+    name: Node.js
+    uses: kellen-miller/ci/.github/workflows/node-test.yaml@c188397b9147dbf21030cf2f3e4fc41bff37358b
     with:
+      check-name: Build and browser end-to-end tests
       test-script: test:ci
       install-playwright: true
       playwright-browsers: chromium
@@ -53,16 +55,5 @@ jobs:
       artifact-path: |
         playwright-report/
         test-results/
-    needs: changes
-    if: ${{ !cancelled() && (needs.changes.result != 'success' || fromJSON(needs.changes.outputs.changes).site) }}
-
-  duplication:
-    name: Code duplication (CPD)
-    permissions:
-      contents: read
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          persist-credentials: false
-      - uses: kellen-miller/ci/.github/actions/code-duplication@eb1a4f5900aaa6468cffb67513da61078265ba26
+    needs: site-paths
+    if: ${{ !cancelled() && (needs.site-paths.result != 'success' || fromJSON(needs.site-paths.outputs.changes).site) }}

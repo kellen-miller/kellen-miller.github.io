@@ -1,4 +1,4 @@
-name: Deploy GitHub Pages
+name: GitHub Pages
 
 on:
   push:
@@ -27,8 +27,9 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
+  deploy-site:
+    name: github-pages environment
     if: github.ref == 'refs/heads/main'
-    uses: kellen-miller/ci/.github/workflows/deploy-github-pages.yaml@f4096214828c04a170d62e79f7b3eab035364522
+    uses: kellen-miller/ci/.github/workflows/deploy-github-pages.yaml@c188397b9147dbf21030cf2f3e4fc41bff37358b
     with:
       output-directory: dist

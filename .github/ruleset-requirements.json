@@ -1,8 +1,8 @@
 {
   "checks": [
-    "build-and-test / Node Test",
-    "lint / lint",
-    "GitHub Actions / Workflow validation",
-    "Code duplication (CPD)"
+    "Node.js / Build and browser end-to-end tests",
+    "Node.js / Formatting, type and static analysis",
+    ".github/workflows / Workflow validation",
+    "JSCPD scan"
   ]
 }

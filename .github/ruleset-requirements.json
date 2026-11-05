@@ -3,6 +3,6 @@
     "Node.js / Build and browser end-to-end tests",
     "Node.js / Formatting, type and static analysis",
     "GitHub Actions / Workflow validation",
-    "Code duplication / JSCPD scan"
+    "JSCPD scan"
   ]
 }

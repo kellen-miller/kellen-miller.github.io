@@ -8,7 +8,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   site-paths:
-    name: Site / Changed paths
+    name: Changed paths
     runs-on: ubuntu-latest
     outputs:
       changes: ${{ steps.paths.outputs.changes }}
